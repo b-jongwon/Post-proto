@@ -1,0 +1,92 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.facthub'
+version = '0.0.1-SNAPSHOT'
+description = 'FactHub'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    /*
+     * REST API / Spring MVC / embedded Tomcat / Jackson
+     */
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+
+    /*
+     * Spring Data JPA / Hibernate / HikariCP
+     */
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    /*
+     * 세션 인증 / 인가 / CSRF
+     */
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    /*
+     * Jakarta Validation
+     *
+     * @Valid, @NotBlank, @Size 등
+     */
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    /*
+     * /actuator/health 등
+     */
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    /*
+     * Flyway 자동 설정
+     */
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+
+    /*
+     * MySQL용 Flyway 지원
+     */
+    runtimeOnly 'org.flywaydb:flyway-mysql'
+
+    /*
+     * MySQL JDBC 드라이버
+     */
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    /*
+     * 개발 중 자동 재시작
+     */
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    /*
+     * JUnit, Mockito, AssertJ, Spring Test
+     */
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    /*
+     * @WithMockUser 등 Spring Security 테스트
+     */
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    /*
+     * JUnit Platform 실행기
+     */
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.named('bootJar') {
+    archiveFileName = 'facthub.jar'
+}
