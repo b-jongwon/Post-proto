@@ -1,4 +1,9 @@
 package com.facthub.common.exception;
 
-public class CommentNotFoundException {
+public class CommentNotFoundException
+        extends RuntimeException {
+
+    public CommentNotFoundException() {
+        super("댓글을 찾을 수 없습니다.");
+    }
 }

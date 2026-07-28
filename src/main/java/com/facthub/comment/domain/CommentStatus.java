@@ -1,4 +1,7 @@
 package com.facthub.comment.domain;
 
-public class CommentStatus {
+public enum CommentStatus {
+
+    ACTIVE,
+    DELETED
 }

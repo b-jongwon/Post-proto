@@ -1,4 +1,7 @@
 package com.facthub.post.domain;
 
-public class PostStatus {
+public enum PostStatus {
+    PUBLISHED,
+    HIDDEN,
+    DELETED
 }

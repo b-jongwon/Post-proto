@@ -1,4 +1,9 @@
 package com.facthub.factcheck.domain;
 
-public class FactCheckStatus {
+public enum FactCheckStatus {
+
+    PENDING,
+    PROCESSING,
+    COMPLETED,
+    FAILED
 }

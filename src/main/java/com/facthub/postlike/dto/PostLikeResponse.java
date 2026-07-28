@@ -1,4 +1,10 @@
 package com.facthub.postlike.dto;
 
-public class PostLikeResponse {
+public record PostLikeResponse(
+
+        Long postId,
+        long likeCount,
+        boolean liked
+
+) {
 }

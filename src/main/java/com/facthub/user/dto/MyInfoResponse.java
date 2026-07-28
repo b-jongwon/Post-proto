@@ -1,4 +1,26 @@
 package com.facthub.user.dto;
 
-public class MyInfoResponse {
+import com.facthub.user.domain.User;
+
+import java.time.LocalDateTime;
+
+public record MyInfoResponse(
+        Long userId,
+        String email,
+        String nickname,
+        String role,
+        String status,
+        LocalDateTime createdAt
+) {
+
+    public static MyInfoResponse from(User user) {
+        return new MyInfoResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getRole().name(),
+                user.getStatus().name(),
+                user.getCreatedAt()
+        );
+    }
 }
