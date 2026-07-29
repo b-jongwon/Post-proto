@@ -702,4 +702,12 @@
     .post-delete-dialog__actions {
         grid-template-columns: 1fr;
     }
+    .post-detail-like-count {
+        color: #db2777;
+    }
+
+    .post-detail-like-count svg {
+        color: #ec4899;
+        fill: rgba(236, 72, 153, 0.12);
+    }
 }

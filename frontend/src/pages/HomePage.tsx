@@ -12,6 +12,7 @@ import {
     ChevronRight,
     Clock3,
     Eye,
+    Heart,
     RotateCcw,
     Search,
     ShieldCheck,
@@ -737,7 +738,13 @@ export function HomePage() {
                                                             'ko-KR',
                                                         )}
                                                     </span>
-
+                                                    <span className="feed-card__like-count">
+                                                           <Heart size={15}/>
+                                                           좋아요{' '}
+                                                          {(post.likeCount ?? 0).toLocaleString(
+                                                            'ko-KR',
+                                                        )}
+                                                    </span>
                                                     <span>
                                                         <ShieldCheck
                                                             size={15}

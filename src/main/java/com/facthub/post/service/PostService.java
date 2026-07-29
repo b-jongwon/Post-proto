@@ -15,6 +15,7 @@ import com.facthub.post.dto.PostStatisticsResponse;
 import com.facthub.post.dto.PostSummaryResponse;
 import com.facthub.post.dto.PostUpdateRequest;
 import com.facthub.post.repository.PostRepository;
+import com.facthub.postlike.repository.PostLikeRepository;
 import com.facthub.user.domain.User;
 import com.facthub.user.service.UserService;
 import org.springframework.data.domain.Page;
@@ -39,14 +40,18 @@ public class PostService {
     private static final int MAX_CATEGORY_LENGTH = 50;
 
     private final PostRepository postRepository;
+    private final PostLikeRepository postLikeRepository;
     private final UserService userService;
+
     private final FactCheckAnalysisRepository
             factCheckAnalysisRepository;
+
     private final PostAnalysisSelectionRepository
             selectionRepository;
 
     public PostService(
             PostRepository postRepository,
+            PostLikeRepository postLikeRepository,
             UserService userService,
             FactCheckAnalysisRepository
                     factCheckAnalysisRepository,
@@ -54,9 +59,12 @@ public class PostService {
                     selectionRepository
     ) {
         this.postRepository = postRepository;
+        this.postLikeRepository = postLikeRepository;
         this.userService = userService;
+
         this.factCheckAnalysisRepository =
                 factCheckAnalysisRepository;
+
         this.selectionRepository =
                 selectionRepository;
     }
@@ -81,15 +89,18 @@ public class PostService {
         Post savedPost =
                 postRepository.save(post);
 
-        return PostResponse.from(savedPost);
+        return PostResponse.from(
+                savedPost,
+                0L
+        );
     }
 
     /*
      * 게시글 목록 조회
      *
-     * 게시글 페이지를 먼저 조회한 뒤,
-     * 해당 페이지의 대표 분석을 한 번에 가져와
-     * 홈 카드에 분석 상태와 결과를 함께 내려준다.
+     * 게시글 페이지를 먼저 조회한 후,
+     * 해당 페이지에 포함된 게시글의 대표 분석과
+     * 좋아요 수를 각각 한 번의 쿼리로 가져온다.
      */
     public PageResponse<PostSummaryResponse> getPosts(
             int page,
@@ -134,8 +145,12 @@ public class PostService {
         Map<Long, PostAnalysisSelection>
                 selectionByPostId;
 
+        Map<Long, Long>
+                likeCountByPostId;
+
         if (postIds.isEmpty()) {
             selectionByPostId = Map.of();
+            likeCountByPostId = Map.of();
         } else {
             selectionByPostId =
                     selectionRepository
@@ -149,14 +164,38 @@ public class PostService {
                                             Function.identity()
                                     )
                             );
+
+            likeCountByPostId =
+                    postLikeRepository
+                            .countLikesByPostIds(
+                                    postIds
+                            )
+                            .stream()
+                            .collect(
+                                    Collectors.toMap(
+                                            PostLikeRepository
+                                                    .PostLikeCountProjection
+                                                    ::getPostId,
+
+                                            PostLikeRepository
+                                                    .PostLikeCountProjection
+                                                    ::getLikeCount
+                                    )
+                            );
         }
 
         Page<PostSummaryResponse> responsePage =
                 postPage.map(post ->
                         PostSummaryResponse.from(
                                 post,
+
                                 selectionByPostId.get(
                                         post.getId()
+                                ),
+
+                                likeCountByPostId.getOrDefault(
+                                        post.getId(),
+                                        0L
                                 )
                         )
                 );
@@ -170,7 +209,8 @@ public class PostService {
      * 완료된 검증은 대표 분석이 존재하면서
      * COMPLETED이고 stale이 아닌 게시글만 센다.
      *
-     * 검증 대기 = 전체 공개 게시글 - 유효한 검증 완료 게시글
+     * 검증 대기 =
+     * 전체 공개 게시글 - 유효한 검증 완료 게시글
      */
     public PostStatisticsResponse getStatistics() {
         long totalPostCount =
@@ -191,13 +231,28 @@ public class PostService {
         );
     }
 
+    /*
+     * 게시글 상세 조회
+     *
+     * 조회수를 증가시키고 실제 좋아요 수를
+     * 함께 반환한다.
+     */
     @Transactional
     public PostResponse getPost(Long postId) {
-        Post post = findPublishedPost(postId);
+        Post post =
+                findPublishedPost(postId);
 
         post.increaseViewCount();
 
-        return PostResponse.from(post);
+        long likeCount =
+                postLikeRepository.countByPost_Id(
+                        postId
+                );
+
+        return PostResponse.from(
+                post,
+                likeCount
+        );
     }
 
     @Transactional
@@ -211,7 +266,8 @@ public class PostService {
                         userEmail
                 );
 
-        Post post = findPublishedPost(postId);
+        Post post =
+                findPublishedPost(postId);
 
         validateAuthor(post, user);
 
@@ -243,7 +299,15 @@ public class PostService {
                     );
         }
 
-        return PostResponse.from(post);
+        long likeCount =
+                postLikeRepository.countByPost_Id(
+                        postId
+                );
+
+        return PostResponse.from(
+                post,
+                likeCount
+        );
     }
 
     @Transactional
@@ -256,7 +320,8 @@ public class PostService {
                         userEmail
                 );
 
-        Post post = findPublishedPost(postId);
+        Post post =
+                findPublishedPost(postId);
 
         validateAuthor(post, user);
 

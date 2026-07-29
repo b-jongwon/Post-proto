@@ -16,6 +16,7 @@ import {
     ExternalLink,
     Eye,
     Gauge,
+    Heart,
     History,
     Info,
     LoaderCircle,
@@ -37,6 +38,7 @@ import {
 import {Badge} from '@/components/ui/Badge'
 import {Button} from '@/components/ui/Button'
 import {Skeleton} from '@/components/ui/Skeleton'
+import {PostInteractions} from '@/components/posts/PostInteractions'
 import {useSession} from '@/features/auth/hooks/useAuth'
 import {
     changeRepresentativeAnalysis,
@@ -1238,6 +1240,13 @@ export function PostDetailPage() {
                                             'ko-KR',
                                         )}
                   </span>
+                                    <span className="post-detail-like-count">
+    <Heart size={15}/>
+    좋아요{' '}
+                                        {(post.likeCount ?? 0).toLocaleString(
+                                            'ko-KR',
+                                        )}
+</span>
 
                                     {wasUpdated && (
                                         <span>
@@ -1338,6 +1347,10 @@ export function PostDetailPage() {
                             onSelectRepresentative={
                                 handleSelectRepresentative
                             }
+                        />
+
+                        <PostInteractions
+                            postId={post.postId}
                         />
                     </div>
 

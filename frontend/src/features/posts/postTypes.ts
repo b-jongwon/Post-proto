@@ -32,6 +32,7 @@ export interface PostSummary {
     authorId: number
     authorNickname: string
     viewCount: number
+    likeCount: number
     createdAt: string
 
     analysisId: number | null
@@ -61,6 +62,7 @@ export interface PostDetail {
     authorNickname: string
     status: string
     viewCount: number
+    likeCount: number
     createdAt: string
     updatedAt: string
 }

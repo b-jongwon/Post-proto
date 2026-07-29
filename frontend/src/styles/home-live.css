@@ -226,3 +226,12 @@
 .home-page .daily-card__bar > span {
     transition: width 280ms ease;
 }
+
+.feed-card__like-count {
+    color: #db2777;
+}
+
+.feed-card__like-count svg {
+    color: #ec4899;
+    fill: rgba(236, 72, 153, 0.12);
+}

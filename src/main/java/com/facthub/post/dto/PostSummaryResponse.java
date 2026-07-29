@@ -15,6 +15,7 @@ public record PostSummaryResponse(
         Long authorId,
         String authorNickname,
         Long viewCount,
+        Long likeCount,
         LocalDateTime createdAt,
 
         Long analysisId,
@@ -26,9 +27,27 @@ public record PostSummaryResponse(
         boolean analysisStale
 ) {
 
+    /*
+     * 기존 호출 코드와의 호환을 위한 기본 메서드다.
+     */
     public static PostSummaryResponse from(
             Post post,
             PostAnalysisSelection selection
+    ) {
+        return from(
+                post,
+                selection,
+                0L
+        );
+    }
+
+    /*
+     * 홈 게시글 카드에 실제 좋아요 수를 포함한다.
+     */
+    public static PostSummaryResponse from(
+            Post post,
+            PostAnalysisSelection selection,
+            long likeCount
     ) {
         FactCheckAnalysis analysis =
                 selection == null
@@ -42,26 +61,33 @@ public record PostSummaryResponse(
                 post.getAuthor().getId(),
                 post.getAuthor().getNickname(),
                 post.getViewCount(),
+                likeCount,
                 post.getCreatedAt(),
 
                 analysis == null
                         ? null
                         : analysis.getId(),
+
                 analysis == null
                         ? null
                         : analysis.getStatus(),
+
                 analysis == null
                         ? null
                         : analysis.getVerdict(),
+
                 analysis == null
                         ? null
                         : analysis.getCredibilityScore(),
+
                 analysis == null
                         ? null
                         : analysis.getSummary(),
+
                 analysis == null
                         ? null
                         : analysis.getCompletedAt(),
+
                 analysis != null
                         && analysis.isStale()
         );
