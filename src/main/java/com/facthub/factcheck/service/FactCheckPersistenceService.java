@@ -1,9 +1,5 @@
 package com.facthub.factcheck.service;
 
-import com.facthub.factcheck.dto.FactCheckHistoryResponse;
-
-import java.util.List;
-
 import com.facthub.common.exception.PostAccessDeniedException;
 import com.facthub.common.exception.PostNotFoundException;
 import com.facthub.factcheck.domain.FactCheckAnalysis;
@@ -11,6 +7,7 @@ import com.facthub.factcheck.domain.FactCheckClaim;
 import com.facthub.factcheck.domain.FactCheckSource;
 import com.facthub.factcheck.domain.FactCheckStatus;
 import com.facthub.factcheck.domain.PostAnalysisSelection;
+import com.facthub.factcheck.dto.FactCheckHistoryResponse;
 import com.facthub.factcheck.dto.FactCheckResponse;
 import com.facthub.factcheck.dto.gemini.GeminiClaimResult;
 import com.facthub.factcheck.dto.gemini.GeminiEvidenceResult;
@@ -35,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -553,12 +551,11 @@ public class FactCheckPersistenceService {
     }
 
     /*
-     * 최초 성공 분석은 자동으로 대표 분석이 된다.
+     * 성공한 새 분석을 항상 대표 분석으로 지정한다.
      *
-     * 기존 대표 분석이 stale 상태라면
-     * 현재 게시글 내용을 분석한 새 결과로 교체한다.
-     *
-     * 일반 재분석에서는 기존 대표 분석을 유지한다.
+     * 이렇게 해야 분석 실행 직후 화면에 보인 결과와
+     * 새로고침 후 GET /analysis로 조회한 결과가 일치한다.
+     * 과거 분석은 이력 API에서 계속 조회할 수 있다.
      */
     private void updateRepresentativeAnalysis(
             FactCheckAnalysis newAnalysis
@@ -571,20 +568,12 @@ public class FactCheckPersistenceService {
         selectionRepository
                 .findByPost_Id(postId)
                 .ifPresentOrElse(
-                        selection -> {
-
-                            FactCheckAnalysis current =
-                                    selection
-                                            .getAnalysis();
-
-                            if (current.isStale()) {
+                        selection ->
                                 selection.changeAnalysis(
                                         newAnalysis,
                                         newAnalysis
                                                 .getRequestedBy()
-                                );
-                            }
-                        },
+                                ),
 
                         () -> {
                             PostAnalysisSelection selection =

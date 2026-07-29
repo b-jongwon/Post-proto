@@ -95,10 +95,16 @@ public interface PostRepository
     );
 
     /*
-     * 일반 게시글 상세 조회
+     * 공개 게시글 개수 조회
      *
-     * 목록·상세·수정·삭제 등
-     * 일반적인 게시글 기능에서 사용한다.
+     * 홈 통계에서 전체 공개 게시글 수를 계산할 때 사용한다.
+     */
+    long countByStatus(
+            PostStatus status
+    );
+
+    /*
+     * 일반 게시글 상세 조회
      */
     @EntityGraph(attributePaths = "author")
     Optional<Post> findByIdAndStatus(
@@ -108,11 +114,6 @@ public interface PostRepository
 
     /*
      * 팩트체크 분석 실행용 게시글 잠금 조회
-     *
-     * 같은 게시글에 여러 분석 요청이 동시에 들어와
-     * 동일한 runNumber가 생성되는 것을 방지한다.
-     *
-     * 반드시 @Transactional 메서드 안에서 호출한다.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @EntityGraph(attributePaths = "author")

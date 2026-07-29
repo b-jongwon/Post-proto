@@ -1,0 +1,24 @@
+.header-write-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    padding: 0 15px;
+    gap: 7px;
+    border: 1px solid var(--color-brand-200);
+    border-radius: 12px;
+    color: var(--color-brand-700);
+    background: var(--color-brand-50);
+    font-size: 14px;
+    font-weight: 750;
+    transition:
+            transform var(--transition-fast),
+            border-color var(--transition-fast),
+            background var(--transition-fast);
+}
+
+.header-write-link:hover {
+    transform: translateY(-1px);
+    border-color: var(--color-brand-300);
+    background: var(--color-brand-100);
+}

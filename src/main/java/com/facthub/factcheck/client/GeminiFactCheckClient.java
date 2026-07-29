@@ -22,8 +22,10 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,6 +44,15 @@ public class GeminiFactCheckClient
 
     private static final int MAX_EVIDENCE_COUNT =
             8;
+
+    private static final int MAX_RETRY_ATTEMPTS =
+            4;
+
+    private static final long INITIAL_RETRY_DELAY_MS =
+            1_000L;
+
+    private static final long MAX_RETRY_DELAY_MS =
+            8_000L;
 
     private static final String SYSTEM_INSTRUCTION = """
             당신은 FactHub 서비스의 전문 팩트체크 엔진이다.
@@ -178,62 +189,256 @@ public class GeminiFactCheckClient
 
     /*
      * Gemini API 호출
+     *
+     * 408, 429, 5xx와 네트워크 오류는
+     * 일시적인 장애일 수 있으므로
+     * 지수 백오프와 jitter를 적용해 재시도한다.
      */
     private GeminiInteractionResponse requestGemini(
             Map<String, Object> requestBody
     ) {
-        try {
-            return restClient
-                    .post()
-                    .uri("/v1beta/interactions")
-                    .header(
-                            "x-goog-api-key",
-                            apiKey
-                    )
-                    .contentType(
-                            MediaType.APPLICATION_JSON
-                    )
-                    .body(requestBody)
-                    .retrieve()
-                    .body(
-                            GeminiInteractionResponse.class
+        long retryDelayMs =
+                INITIAL_RETRY_DELAY_MS;
+
+        for (
+                int attempt = 1;
+                attempt <= MAX_RETRY_ATTEMPTS;
+                attempt++
+        ) {
+            try {
+                return restClient
+                        .post()
+                        .uri("/v1beta/interactions")
+                        .header(
+                                "x-goog-api-key",
+                                apiKey
+                        )
+                        .contentType(
+                                MediaType.APPLICATION_JSON
+                        )
+                        .body(requestBody)
+                        .retrieve()
+                        .body(
+                                GeminiInteractionResponse.class
+                        );
+
+            } catch (
+                    RestClientResponseException exception
+            ) {
+                int statusCode =
+                        exception
+                                .getStatusCode()
+                                .value();
+
+                String responseBody =
+                        exception
+                                .getResponseBodyAsString();
+
+                boolean retryable =
+                        isRetryableStatus(
+                                statusCode
+                        );
+
+                log.warn(
+                        "Gemini API 요청 실패. "
+                                + "attempt={}/{}, "
+                                + "status={}, "
+                                + "retryable={}, "
+                                + "body={}",
+                        attempt,
+                        MAX_RETRY_ATTEMPTS,
+                        statusCode,
+                        retryable,
+                        limitLength(
+                                responseBody,
+                                3000
+                        )
+                );
+
+                if (!retryable
+                        || attempt
+                        == MAX_RETRY_ATTEMPTS) {
+
+                    throw FactCheckException.upstream(
+                            createGeminiErrorMessage(
+                                    statusCode,
+                                    responseBody
+                            )
                     );
+                }
 
-        } catch (RestClientResponseException exception) {
+                sleepBeforeRetry(
+                        retryDelayMs,
+                        attempt
+                );
 
-            String responseBody =
-                    exception.getResponseBodyAsString();
+                retryDelayMs =
+                        Math.min(
+                                retryDelayMs * 2,
+                                MAX_RETRY_DELAY_MS
+                        );
 
-            log.warn(
-                    "Gemini API 요청 실패. status={}, body={}",
-                    exception
-                            .getStatusCode()
-                            .value(),
-                    limitLength(
-                            responseBody,
-                            3000
-                    )
+            } catch (
+                    RestClientException exception
+            ) {
+                log.warn(
+                        "Gemini API 통신 실패. "
+                                + "attempt={}/{}",
+                        attempt,
+                        MAX_RETRY_ATTEMPTS,
+                        exception
+                );
+
+                if (attempt
+                        == MAX_RETRY_ATTEMPTS) {
+
+                    throw FactCheckException.upstream(
+                            "Gemini API 서버와 통신할 수 없습니다."
+                    );
+                }
+
+                sleepBeforeRetry(
+                        retryDelayMs,
+                        attempt
+                );
+
+                retryDelayMs =
+                        Math.min(
+                                retryDelayMs * 2,
+                                MAX_RETRY_DELAY_MS
+                        );
+            }
+        }
+
+        throw FactCheckException.upstream(
+                "Gemini API 요청에 실패했습니다."
+        );
+    }
+
+    /*
+     * 일시적 오류로 판단해 재시도할 HTTP 상태
+     */
+    private boolean isRetryableStatus(
+            int statusCode
+    ) {
+        return statusCode == 408
+                || statusCode == 429
+                || statusCode == 500
+                || statusCode == 502
+                || statusCode == 503
+                || statusCode == 504;
+    }
+
+    /*
+     * 재시도 간격:
+     * 1초 → 2초 → 4초 순으로 증가하고
+     * 요청이 동시에 다시 몰리지 않도록
+     * 250~750ms의 jitter를 더한다.
+     */
+    private void sleepBeforeRetry(
+            long baseDelayMs,
+            int attempt
+    ) {
+        long jitterMs =
+                ThreadLocalRandom
+                        .current()
+                        .nextLong(
+                                250L,
+                                751L
+                        );
+
+        long actualDelayMs =
+                Math.min(
+                        baseDelayMs + jitterMs,
+                        MAX_RETRY_DELAY_MS
+                );
+
+        log.info(
+                "Gemini API 재시도 대기. "
+                        + "attempt={}, "
+                        + "delayMs={}",
+                attempt,
+                actualDelayMs
+        );
+
+        try {
+            Thread.sleep(
+                    actualDelayMs
             );
+
+        } catch (
+                InterruptedException exception
+        ) {
+            Thread.currentThread()
+                    .interrupt();
 
             throw FactCheckException.upstream(
-                    "Gemini API 호출에 실패했습니다. "
-                            + "HTTP 상태 코드: "
-                            + exception
-                            .getStatusCode()
-                            .value()
-            );
-
-        } catch (RestClientException exception) {
-
-            log.warn(
-                    "Gemini API 통신 실패",
-                    exception
-            );
-
-            throw FactCheckException.upstream(
-                    "Gemini API 서버와 통신할 수 없습니다."
+                    "Gemini API 재시도 대기 중 요청이 중단되었습니다."
             );
         }
+    }
+
+    /*
+     * Gemini 오류 응답을 사용자에게 보여줄
+     * 이해하기 쉬운 메시지로 변환한다.
+     */
+    private String createGeminiErrorMessage(
+            int statusCode,
+            String responseBody
+    ) {
+        if (isHighDemandResponse(
+                responseBody
+        )) {
+            return "현재 Gemini 모델 요청이 많습니다. "
+                    + "잠시 후 다시 시도해 주세요.";
+        }
+
+        if (statusCode == 429) {
+            return "Gemini API 요청 한도를 초과했습니다. "
+                    + "잠시 후 다시 시도해 주세요.";
+        }
+
+        if (statusCode == 401
+                || statusCode == 403) {
+
+            return "Gemini API 키 또는 접근 권한을 확인해 주세요.";
+        }
+
+        if (statusCode == 400) {
+            return "Gemini API 요청 형식이 올바르지 않습니다.";
+        }
+
+        return "Gemini API 호출에 실패했습니다. "
+                + "HTTP 상태 코드: "
+                + statusCode;
+    }
+
+    /*
+     * Gemini가 모델 과부하를 알린 응답인지 확인한다.
+     */
+    private boolean isHighDemandResponse(
+            String responseBody
+    ) {
+        if (!StringUtils.hasText(
+                responseBody
+        )) {
+            return false;
+        }
+
+        String normalizedBody =
+                responseBody.toLowerCase(
+                        Locale.ROOT
+                );
+
+        return normalizedBody.contains(
+                "high demand"
+        )
+                || normalizedBody.contains(
+                "temporarily overloaded"
+        )
+                || normalizedBody.contains(
+                "try again later"
+        );
     }
 
     /*

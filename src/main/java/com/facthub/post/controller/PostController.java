@@ -4,6 +4,7 @@ import com.facthub.common.response.ApiResponse;
 import com.facthub.common.response.PageResponse;
 import com.facthub.post.dto.PostCreateRequest;
 import com.facthub.post.dto.PostResponse;
+import com.facthub.post.dto.PostStatisticsResponse;
 import com.facthub.post.dto.PostSummaryResponse;
 import com.facthub.post.dto.PostUpdateRequest;
 import com.facthub.post.service.PostService;
@@ -35,17 +36,6 @@ public class PostController {
         this.postService = postService;
     }
 
-    /*
-     * 게시글 목록·검색·필터·정렬
-     *
-     * 사용 예:
-     *
-     * GET /api/posts
-     * GET /api/posts?keyword=Spring
-     * GET /api/posts?category=AI
-     * GET /api/posts?sort=views
-     * GET /api/posts?keyword=Spring&category=AI&sort=latest
-     */
     @GetMapping
     public ApiResponse<PageResponse<PostSummaryResponse>>
     getPosts(
@@ -77,8 +67,16 @@ public class PostController {
     }
 
     /*
-     * 게시글 상세 조회
+     * 홈 화면용 게시글·검증 통계
      */
+    @GetMapping("/statistics")
+    public ApiResponse<PostStatisticsResponse>
+    getStatistics() {
+        return ApiResponse.success(
+                postService.getStatistics()
+        );
+    }
+
     @GetMapping("/{postId}")
     public ApiResponse<PostResponse> getPost(
             @PathVariable Long postId
@@ -88,9 +86,6 @@ public class PostController {
         );
     }
 
-    /*
-     * 게시글 작성
-     */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<PostResponse> create(
@@ -99,17 +94,15 @@ public class PostController {
 
             Authentication authentication
     ) {
-        PostResponse response = postService.create(
-                request,
-                authentication.getName()
-        );
+        PostResponse response =
+                postService.create(
+                        request,
+                        authentication.getName()
+                );
 
         return ApiResponse.success(response);
     }
 
-    /*
-     * 게시글 수정
-     */
     @PutMapping("/{postId}")
     public ApiResponse<PostResponse> update(
             @PathVariable Long postId,
@@ -119,18 +112,16 @@ public class PostController {
 
             Authentication authentication
     ) {
-        PostResponse response = postService.update(
-                postId,
-                request,
-                authentication.getName()
-        );
+        PostResponse response =
+                postService.update(
+                        postId,
+                        request,
+                        authentication.getName()
+                );
 
         return ApiResponse.success(response);
     }
 
-    /*
-     * 게시글 소프트 삭제
-     */
     @DeleteMapping("/{postId}")
     public ApiResponse<Map<String, String>> delete(
             @PathVariable Long postId,

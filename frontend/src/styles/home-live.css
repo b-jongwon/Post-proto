@@ -1,0 +1,228 @@
+.home-page .home-feed-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.home-page .home-feed-heading-actions .text-button:disabled {
+    cursor: default;
+    opacity: 0.4;
+}
+
+.home-page .feed-card__body--link {
+    display: block;
+    min-width: 0;
+}
+
+.home-page .feed-card__body--link:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.25);
+    outline-offset: -4px;
+    border-radius: 18px 0 0 18px;
+}
+
+.home-page .feed-card__detail-button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-top: 18px;
+    color: var(--color-ink-600);
+    border-radius: 11px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-xs);
+    transition:
+            color var(--transition-fast),
+            transform var(--transition-fast),
+            box-shadow var(--transition-fast);
+}
+
+.home-page .feed-card__detail-button:hover {
+    color: var(--color-brand-700);
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* 로딩 */
+
+.home-page .home-feed-skeleton-card {
+    pointer-events: none;
+}
+
+.home-page .home-feed-skeleton-block {
+    display: block;
+    border-radius: 8px;
+    background:
+            linear-gradient(
+                    90deg,
+                    var(--color-ink-100) 25%,
+                    #ffffff 50%,
+                    var(--color-ink-100) 75%
+            );
+    background-size: 200% 100%;
+    animation: shimmer 1.35s infinite;
+}
+
+.home-page .home-feed-skeleton-meta,
+.home-page .home-feed-skeleton-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.home-page .home-feed-skeleton-block--badge {
+    width: 54px;
+    height: 26px;
+    border-radius: 999px;
+}
+
+.home-page .home-feed-skeleton-block--time {
+    width: 67px;
+    height: 12px;
+}
+
+.home-page .home-feed-skeleton-block--title {
+    width: 72%;
+    height: 23px;
+    margin-top: 18px;
+}
+
+.home-page .home-feed-skeleton-block--text {
+    width: 94%;
+    height: 13px;
+    margin-top: 14px;
+}
+
+.home-page .home-feed-skeleton-block--text-short {
+    width: 63%;
+    height: 13px;
+    margin-top: 8px;
+}
+
+.home-page .home-feed-skeleton-author {
+    margin-top: 24px;
+}
+
+.home-page .home-feed-skeleton-block--avatar {
+    width: 27px;
+    height: 27px;
+    border-radius: 9px;
+}
+
+.home-page .home-feed-skeleton-block--author {
+    width: 82px;
+    height: 12px;
+}
+
+.home-page .home-feed-skeleton-block--score {
+    width: 36px;
+    height: 31px;
+    margin-top: 15px;
+}
+
+.home-page .home-feed-skeleton-verdict {
+    gap: 4px;
+}
+
+/* 빈 목록 및 오류 */
+
+.home-page .home-feed-state {
+    display: grid;
+    min-height: 270px;
+    align-content: center;
+    justify-items: center;
+    padding: 36px 24px;
+    border: 1px solid var(--color-ink-200);
+    border-radius: 20px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-xs);
+    text-align: center;
+}
+
+.home-page .home-feed-state__icon {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    color: var(--color-brand-600);
+    border-radius: 17px;
+    background: var(--color-brand-50);
+}
+
+.home-page .home-feed-state h3 {
+    margin-top: 16px;
+    color: var(--color-ink-950);
+    font-size: 19px;
+    letter-spacing: -0.025em;
+}
+
+.home-page .home-feed-state p {
+    max-width: 460px;
+    margin-top: 7px;
+    color: var(--color-ink-600);
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.home-page .home-feed-state button,
+.home-page .home-feed-state > a {
+    display: inline-flex;
+    min-height: 41px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 18px;
+    padding: 0 15px;
+    gap: 7px;
+    border-radius: 12px;
+    color: var(--color-white);
+    background: var(--color-brand-600);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+            transform var(--transition-fast),
+            background var(--transition-fast);
+}
+
+.home-page .home-feed-state button:hover,
+.home-page .home-feed-state > a:hover {
+    transform: translateY(-1px);
+    background: var(--color-brand-700);
+}
+
+@media (max-width: 760px) {
+    .home-page .home-feed-heading-actions {
+        gap: 10px;
+    }
+
+    .home-page .feed-card__detail-button {
+        width: 30px;
+        height: 30px;
+        margin: 0;
+    }
+
+    .home-page .home-feed-state {
+        min-height: 240px;
+        padding: 30px 18px;
+    }
+}
+/* 실제 팩트체크 상태 표시 */
+
+.home-page .home-analysis-time {
+    display: block;
+    margin-top: 3px;
+    color: var(--color-ink-400);
+    font-size: 8px;
+    line-height: 1.3;
+}
+
+.home-page .feed-card__verdict > strong {
+    font-variant-numeric: tabular-nums;
+}
+
+.home-page .daily-card__header strong {
+    font-variant-numeric: tabular-nums;
+}
+
+.home-page .daily-card__bar > span {
+    transition: width 280ms ease;
+}

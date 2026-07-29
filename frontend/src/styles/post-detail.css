@@ -1,0 +1,705 @@
+.post-detail-page {
+    min-height: calc(100vh - 72px);
+    padding: 46px 0 88px;
+    background:
+            radial-gradient(
+                    circle at 12% 6%,
+                    rgba(59, 130, 246, 0.08),
+                    transparent 24%
+            ),
+            linear-gradient(
+                    180deg,
+                    #fbfdff 0%,
+                    var(--color-ink-50) 100%
+            );
+}
+
+.post-detail-back-link {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 7px;
+    color: var(--color-ink-600);
+    font-size: 13px;
+    font-weight: 750;
+    transition:
+            color var(--transition-fast),
+            transform var(--transition-fast);
+}
+
+.post-detail-back-link:hover {
+    color: var(--color-brand-700);
+    transform: translateX(-2px);
+}
+
+.post-detail-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    align-items: start;
+    gap: 24px;
+}
+
+.post-detail-card,
+.post-detail-side-card,
+.post-detail-state-card {
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+    box-shadow: var(--shadow-sm);
+}
+
+.post-detail-card {
+    overflow: hidden;
+    border-radius: 26px;
+}
+
+.post-detail-header {
+    padding: 42px 46px 30px;
+}
+
+.post-detail-header__top,
+.post-detail-author-row,
+.post-detail-meta,
+.post-detail-footer,
+.post-detail-guide-card__title,
+.post-detail-quick-actions {
+    display: flex;
+    align-items: center;
+}
+
+.post-detail-header__top {
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.post-detail-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.post-detail-status {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-success-600);
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.post-detail-owner-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.post-detail-owner-button {
+    display: inline-flex;
+    min-height: 35px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 11px;
+    gap: 6px;
+    border: 1px solid var(--color-ink-200);
+    border-radius: 10px;
+    color: var(--color-ink-700);
+    background: var(--color-white);
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    transition:
+            color var(--transition-fast),
+            border-color var(--transition-fast),
+            background var(--transition-fast),
+            transform var(--transition-fast),
+            box-shadow var(--transition-fast);
+}
+
+.post-detail-owner-button:hover {
+    color: var(--color-brand-700);
+    border-color: var(--color-brand-200);
+    background: var(--color-brand-50);
+    box-shadow: var(--shadow-xs);
+    transform: translateY(-1px);
+}
+
+.post-detail-owner-button--danger {
+    color: var(--color-danger-600);
+    border-color: #fecdd3;
+    background: #fff7f8;
+}
+
+.post-detail-owner-button--danger:hover {
+    color: #be123c;
+    border-color: #fda4af;
+    background: var(--color-danger-50);
+}
+
+.post-detail-header h1 {
+    max-width: 830px;
+    margin-top: 22px;
+    color: var(--color-ink-950);
+    font-size: clamp(30px, 4vw, 44px);
+    line-height: 1.28;
+    letter-spacing: -0.045em;
+    word-break: keep-all;
+}
+
+.post-detail-author-row {
+    margin-top: 28px;
+    gap: 11px;
+}
+
+.post-detail-avatar {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    color: var(--color-brand-700);
+    border-radius: 13px;
+    background: var(--color-brand-50);
+    font-size: 15px;
+    font-weight: 850;
+}
+
+.post-detail-author-row > div {
+    display: grid;
+    gap: 2px;
+}
+
+.post-detail-author-row strong {
+    color: var(--color-ink-800);
+    font-size: 13px;
+}
+
+.post-detail-author-row span:last-child {
+    color: var(--color-ink-500);
+    font-size: 10px;
+}
+
+.post-detail-meta {
+    flex-wrap: wrap;
+    margin-top: 22px;
+    gap: 10px 18px;
+    color: var(--color-ink-500);
+    font-size: 11px;
+}
+
+.post-detail-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.post-detail-divider {
+    height: 1px;
+    margin: 0 46px;
+    background: var(--color-ink-100);
+}
+
+.post-detail-content {
+    min-height: 300px;
+    padding: 38px 46px 50px;
+    overflow-wrap: anywhere;
+    color: var(--color-ink-800);
+    font-size: 16px;
+    line-height: 1.95;
+    white-space: pre-wrap;
+}
+
+.post-detail-footer {
+    justify-content: space-between;
+    padding: 20px 28px;
+    gap: 16px;
+    border-top: 1px solid var(--color-ink-100);
+    background: var(--color-ink-50);
+}
+
+.post-detail-footer p {
+    color: var(--color-ink-600);
+    font-size: 11px;
+}
+
+.post-detail-footer button,
+.post-detail-quick-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--color-ink-700);
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    transition:
+            border-color var(--transition-fast),
+            color var(--transition-fast),
+            transform var(--transition-fast);
+}
+
+.post-detail-footer button {
+    min-height: 38px;
+    padding: 0 13px;
+    border-radius: 11px;
+}
+
+.post-detail-footer button:hover,
+.post-detail-quick-actions button:hover:not(:disabled) {
+    color: var(--color-brand-700);
+    border-color: var(--color-brand-200);
+    transform: translateY(-1px);
+}
+
+.post-detail-sidebar {
+    display: grid;
+    gap: 14px;
+}
+
+.post-detail-side-card {
+    padding: 25px;
+    border-radius: 22px;
+}
+
+.post-detail-side-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 18px;
+    color: var(--color-accent-500);
+    border-radius: 14px;
+    background: #f1ecff;
+}
+
+.post-detail-analysis-card {
+    background:
+            radial-gradient(
+                    circle at 92% 8%,
+                    rgba(124, 58, 237, 0.09),
+                    transparent 30%
+            ),
+            var(--color-white);
+}
+
+.post-detail-analysis-card h2,
+.post-detail-guide-card h2 {
+    color: var(--color-ink-950);
+    letter-spacing: -0.025em;
+}
+
+.post-detail-analysis-card h2 {
+    margin-top: 15px;
+    font-size: 21px;
+    line-height: 1.4;
+}
+
+.post-detail-analysis-card > p {
+    margin-top: 10px;
+    color: var(--color-ink-600);
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.post-detail-analysis-steps {
+    display: grid;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.post-detail-analysis-steps span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--color-ink-700);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.post-detail-analysis-steps svg {
+    color: var(--color-success-600);
+}
+
+.post-detail-analysis-card > button {
+    display: inline-flex;
+    width: 100%;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 23px;
+    gap: 7px;
+    color: var(--color-ink-500);
+    border-radius: 12px;
+    background: var(--color-ink-100);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: not-allowed;
+}
+
+.post-detail-guide-card__title {
+    gap: 8px;
+    color: var(--color-brand-600);
+}
+
+.post-detail-guide-card h2 {
+    font-size: 16px;
+}
+
+.post-detail-guide-card ul {
+    display: grid;
+    margin-top: 16px;
+    gap: 11px;
+}
+
+.post-detail-guide-card li {
+    position: relative;
+    padding-left: 17px;
+    color: var(--color-ink-600);
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.post-detail-guide-card li::before {
+    position: absolute;
+    top: 8px;
+    left: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-brand-400);
+    content: "";
+}
+
+.post-detail-quick-actions {
+    gap: 8px;
+}
+
+.post-detail-quick-actions button {
+    min-height: 40px;
+    flex: 1;
+    border-radius: 12px;
+}
+
+.post-detail-quick-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.52;
+}
+
+.post-detail-state-card {
+    display: grid;
+    max-width: 620px;
+    justify-items: center;
+    margin: 40px auto;
+    padding: 62px 30px;
+    border-radius: 24px;
+    text-align: center;
+}
+
+.post-detail-state-card > svg {
+    color: var(--color-brand-600);
+}
+
+.post-detail-state-card h1 {
+    margin-top: 19px;
+    color: var(--color-ink-950);
+    font-size: 26px;
+    letter-spacing: -0.03em;
+}
+
+.post-detail-state-card p {
+    margin-top: 9px;
+    color: var(--color-ink-600);
+    font-size: 13px;
+}
+
+.post-detail-state-card > a,
+.post-detail-state-actions > a {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    color: var(--color-brand-700);
+    border: 1px solid var(--color-brand-200);
+    border-radius: 12px;
+    background: var(--color-brand-50);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.post-detail-state-card > a {
+    margin-top: 23px;
+}
+
+.post-detail-state-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 24px;
+    gap: 10px;
+}
+
+.post-detail-card--loading,
+.post-detail-side-card--loading {
+    display: grid;
+    align-content: start;
+    gap: 20px;
+}
+
+.post-detail-card--loading {
+    min-height: 580px;
+    padding: 46px;
+}
+
+.post-detail-side-card--loading {
+    min-height: 260px;
+}
+
+.post-detail-skeleton-lines {
+    display: grid;
+    margin-top: 32px;
+    gap: 14px;
+}
+
+/* 삭제 확인 모달 */
+
+.post-delete-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.46);
+    backdrop-filter: blur(8px);
+}
+
+.post-delete-dialog {
+    position: relative;
+    width: min(100%, 430px);
+    padding: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    border-radius: 24px;
+    background: var(--color-white);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+    text-align: center;
+    animation: post-delete-dialog-in 180ms ease-out;
+}
+
+.post-delete-dialog__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    padding: 0;
+    border-radius: 11px;
+    color: var(--color-ink-500);
+    background: transparent;
+    cursor: pointer;
+}
+
+.post-delete-dialog__close:hover {
+    color: var(--color-ink-900);
+    background: var(--color-ink-50);
+}
+
+.post-delete-dialog__close:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.post-delete-dialog__icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    margin-inline: auto;
+    color: var(--color-danger-600);
+    border-radius: 18px;
+    background: var(--color-danger-50);
+}
+
+.post-delete-dialog h2 {
+    margin-top: 20px;
+    color: var(--color-ink-950);
+    font-size: 23px;
+    letter-spacing: -0.035em;
+}
+
+.post-delete-dialog > p {
+    margin-top: 9px;
+    color: var(--color-ink-600);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.post-delete-dialog__error {
+    margin-top: 18px;
+    padding: 11px 13px;
+    border: 1px solid #fecaca;
+    border-radius: 11px;
+    color: #b42318;
+    background: #fff4f3;
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.post-delete-dialog__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 26px;
+    gap: 10px;
+}
+
+.post-delete-dialog__actions button {
+    display: inline-flex;
+    min-height: 46px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+            transform var(--transition-fast),
+            box-shadow var(--transition-fast),
+            background var(--transition-fast);
+}
+
+.post-delete-dialog__actions button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.post-delete-dialog__actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.post-delete-dialog__cancel {
+    color: var(--color-ink-700);
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+}
+
+.post-delete-dialog__cancel:hover:not(:disabled) {
+    background: var(--color-ink-50);
+}
+
+.post-delete-dialog__confirm {
+    color: var(--color-white);
+    background: linear-gradient(
+            135deg,
+            #e11d48,
+            #be123c
+    );
+    box-shadow: 0 9px 20px rgba(225, 29, 72, 0.22);
+}
+
+.post-delete-dialog__confirm:hover:not(:disabled) {
+    box-shadow: 0 13px 26px rgba(225, 29, 72, 0.28);
+}
+
+@keyframes post-delete-dialog-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 960px) {
+    .post-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .post-detail-sidebar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .post-detail-quick-actions {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 680px) {
+    .post-detail-page {
+        padding: 28px 0 100px;
+    }
+
+    .post-detail-header {
+        padding: 28px 22px 24px;
+    }
+
+    .post-detail-header__top {
+        align-items: flex-start;
+    }
+
+    .post-detail-header-actions {
+        align-items: flex-end;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .post-detail-owner-actions {
+        gap: 6px;
+    }
+
+    .post-detail-owner-button {
+        min-height: 33px;
+        padding: 0 9px;
+    }
+
+    .post-detail-header h1 {
+        font-size: 30px;
+    }
+
+    .post-detail-divider {
+        margin: 0 22px;
+    }
+
+    .post-detail-content {
+        padding: 28px 22px 38px;
+        font-size: 15px;
+    }
+
+    .post-detail-footer {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 18px 22px;
+    }
+
+    .post-detail-footer button {
+        width: 100%;
+    }
+
+    .post-detail-sidebar {
+        grid-template-columns: 1fr;
+    }
+
+    .post-detail-quick-actions {
+        grid-column: auto;
+    }
+
+    .post-detail-state-actions {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .post-delete-dialog {
+        padding: 28px 20px 20px;
+        border-radius: 21px;
+    }
+
+    .post-delete-dialog__actions {
+        grid-template-columns: 1fr;
+    }
+}

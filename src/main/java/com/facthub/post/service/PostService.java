@@ -3,10 +3,15 @@ package com.facthub.post.service;
 import com.facthub.common.exception.PostAccessDeniedException;
 import com.facthub.common.exception.PostNotFoundException;
 import com.facthub.common.response.PageResponse;
+import com.facthub.factcheck.domain.FactCheckStatus;
+import com.facthub.factcheck.domain.PostAnalysisSelection;
+import com.facthub.factcheck.repository.FactCheckAnalysisRepository;
+import com.facthub.factcheck.repository.PostAnalysisSelectionRepository;
 import com.facthub.post.domain.Post;
 import com.facthub.post.domain.PostStatus;
 import com.facthub.post.dto.PostCreateRequest;
 import com.facthub.post.dto.PostResponse;
+import com.facthub.post.dto.PostStatisticsResponse;
 import com.facthub.post.dto.PostSummaryResponse;
 import com.facthub.post.dto.PostUpdateRequest;
 import com.facthub.post.repository.PostRepository;
@@ -18,9 +23,12 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import com.facthub.factcheck.repository.FactCheckAnalysisRepository;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,32 +40,36 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final UserService userService;
-    private final FactCheckAnalysisRepository factCheckAnalysisRepository;
+    private final FactCheckAnalysisRepository
+            factCheckAnalysisRepository;
+    private final PostAnalysisSelectionRepository
+            selectionRepository;
 
     public PostService(
             PostRepository postRepository,
             UserService userService,
             FactCheckAnalysisRepository
-                    factCheckAnalysisRepository
+                    factCheckAnalysisRepository,
+            PostAnalysisSelectionRepository
+                    selectionRepository
     ) {
         this.postRepository = postRepository;
         this.userService = userService;
-
         this.factCheckAnalysisRepository =
                 factCheckAnalysisRepository;
+        this.selectionRepository =
+                selectionRepository;
     }
 
-    /*
-     * 게시글 작성
-     */
     @Transactional
     public PostResponse create(
             PostCreateRequest request,
             String userEmail
     ) {
-        User user = userService.getActiveUserByEmail(
-                userEmail
-        );
+        User user =
+                userService.getActiveUserByEmail(
+                        userEmail
+                );
 
         Post post = Post.create(
                 user,
@@ -66,7 +78,8 @@ public class PostService {
                 request.category().trim()
         );
 
-        Post savedPost = postRepository.save(post);
+        Post savedPost =
+                postRepository.save(post);
 
         return PostResponse.from(savedPost);
     }
@@ -74,17 +87,9 @@ public class PostService {
     /*
      * 게시글 목록 조회
      *
-     * keyword:
-     * - 제목
-     * - 본문
-     * - 작성자 닉네임
-     *
-     * category:
-     * - 게시글 카테고리
-     *
-     * sort:
-     * - latest: 최신순
-     * - views: 조회수순
+     * 게시글 페이지를 먼저 조회한 뒤,
+     * 해당 페이지의 대표 분석을 한 번에 가져와
+     * 홈 카드에 분석 상태와 결과를 함께 내려준다.
      */
     public PageResponse<PostSummaryResponse> getPosts(
             int page,
@@ -106,35 +111,88 @@ public class PostService {
                 normalizedCategory
         );
 
-        Sort postSort = createSort(sort);
-
         PageRequest pageable = PageRequest.of(
                 page,
                 size,
-                postSort
+                createSort(sort)
         );
 
+        Page<Post> postPage =
+                postRepository.searchPosts(
+                        PostStatus.PUBLISHED,
+                        normalizedKeyword,
+                        normalizedCategory,
+                        pageable
+                );
+
+        List<Long> postIds =
+                postPage.getContent()
+                        .stream()
+                        .map(Post::getId)
+                        .toList();
+
+        Map<Long, PostAnalysisSelection>
+                selectionByPostId;
+
+        if (postIds.isEmpty()) {
+            selectionByPostId = Map.of();
+        } else {
+            selectionByPostId =
+                    selectionRepository
+                            .findAllByPost_IdIn(
+                                    postIds
+                            )
+                            .stream()
+                            .collect(
+                                    Collectors.toMap(
+                                            PostAnalysisSelection::getPostId,
+                                            Function.identity()
+                                    )
+                            );
+        }
+
         Page<PostSummaryResponse> responsePage =
-                postRepository
-                        .searchPosts(
-                                PostStatus.PUBLISHED,
-                                normalizedKeyword,
-                                normalizedCategory,
-                                pageable
+                postPage.map(post ->
+                        PostSummaryResponse.from(
+                                post,
+                                selectionByPostId.get(
+                                        post.getId()
+                                )
                         )
-                        .map(PostSummaryResponse::from);
+                );
 
         return PageResponse.from(responsePage);
     }
 
     /*
-     * 게시글 상세 조회
+     * 홈 통계 조회
      *
-     * 상세 조회가 성공하면 조회수를 1 증가시킨다.
+     * 완료된 검증은 대표 분석이 존재하면서
+     * COMPLETED이고 stale이 아닌 게시글만 센다.
+     *
+     * 검증 대기 = 전체 공개 게시글 - 유효한 검증 완료 게시글
      */
+    public PostStatisticsResponse getStatistics() {
+        long totalPostCount =
+                postRepository.countByStatus(
+                        PostStatus.PUBLISHED
+                );
+
+        long completedVerificationCount =
+                selectionRepository
+                        .countCurrentVerifiedPosts(
+                                PostStatus.PUBLISHED,
+                                FactCheckStatus.COMPLETED
+                        );
+
+        return PostStatisticsResponse.of(
+                totalPostCount,
+                completedVerificationCount
+        );
+    }
+
     @Transactional
     public PostResponse getPost(Long postId) {
-
         Post post = findPublishedPost(postId);
 
         post.increaseViewCount();
@@ -142,9 +200,6 @@ public class PostService {
         return PostResponse.from(post);
     }
 
-    /*
-     * 게시글 수정
-     */
     @Transactional
     public PostResponse update(
             Long postId,
@@ -152,18 +207,13 @@ public class PostService {
             String userEmail
     ) {
         User user =
-                userService
-                        .getActiveUserByEmail(
-                                userEmail
-                        );
+                userService.getActiveUserByEmail(
+                        userEmail
+                );
 
-        Post post =
-                findPublishedPost(postId);
+        Post post = findPublishedPost(postId);
 
-        validateAuthor(
-                post,
-                user
-        );
+        validateAuthor(post, user);
 
         String newTitle =
                 request.title().trim();
@@ -174,16 +224,8 @@ public class PostService {
         String newCategory =
                 request.category().trim();
 
-        /*
-         * 팩트체크 분석 대상은 제목과 본문이다.
-         *
-         * 카테고리만 수정한 경우에는
-         * 기존 분석을 stale 처리하지 않는다.
-         */
         boolean analysisTargetChanged =
-                !post.getTitle().equals(
-                        newTitle
-                )
+                !post.getTitle().equals(newTitle)
                         || !post.getContent().equals(
                         newContent
                 );
@@ -204,17 +246,15 @@ public class PostService {
         return PostResponse.from(post);
     }
 
-    /*
-     * 게시글 소프트 삭제
-     */
     @Transactional
     public void delete(
             Long postId,
             String userEmail
     ) {
-        User user = userService.getActiveUserByEmail(
-                userEmail
-        );
+        User user =
+                userService.getActiveUserByEmail(
+                        userEmail
+                );
 
         Post post = findPublishedPost(postId);
 
@@ -223,21 +263,19 @@ public class PostService {
         post.delete();
     }
 
-    /*
-     * 공개 상태 게시글 조회
-     */
-    private Post findPublishedPost(Long postId) {
+    private Post findPublishedPost(
+            Long postId
+    ) {
         return postRepository
                 .findByIdAndStatus(
                         postId,
                         PostStatus.PUBLISHED
                 )
-                .orElseThrow(PostNotFoundException::new);
+                .orElseThrow(
+                        PostNotFoundException::new
+                );
     }
 
-    /*
-     * 게시글 작성자 검증
-     */
     private void validateAuthor(
             Post post,
             User user
@@ -247,12 +285,6 @@ public class PostService {
         }
     }
 
-    /*
-     * 검색값 정규화
-     *
-     * null, 빈 문자열, 공백만 있는 문자열은
-     * 검색 조건이 없는 것으로 처리한다.
-     */
     private String normalizeOptionalValue(
             String value
     ) {
@@ -263,16 +295,11 @@ public class PostService {
         return value.trim();
     }
 
-    /*
-     * 정렬 조건 생성
-     */
     private Sort createSort(String sort) {
-
         String normalizedSort =
                 normalizeSortValue(sort);
 
         return switch (normalizedSort) {
-
             case "latest" ->
                     Sort.by(
                             Sort.Direction.DESC,
@@ -307,11 +334,9 @@ public class PostService {
         };
     }
 
-    /*
-     * 정렬값 정규화
-     */
-    private String normalizeSortValue(String sort) {
-
+    private String normalizeSortValue(
+            String sort
+    ) {
         if (!StringUtils.hasText(sort)) {
             return "latest";
         }
@@ -321,9 +346,6 @@ public class PostService {
                 .toLowerCase(Locale.ROOT);
     }
 
-    /*
-     * 페이지 번호와 크기 검증
-     */
     private void validatePagination(
             int page,
             int size
@@ -341,9 +363,6 @@ public class PostService {
         }
     }
 
-    /*
-     * 검색 조건 길이 검증
-     */
     private void validateSearchCondition(
             String keyword,
             String category
