@@ -10,6 +10,7 @@ import type {
     PostCreateRequest,
     PostDeleteResponse,
     PostDetail,
+    PostHighlights,
     PostStatistics,
     PostSummary,
     PostUpdateRequest,
@@ -38,6 +39,23 @@ export async function getPostStatistics(
     const response = await apiClient.get<
         ApiResponse<PostStatistics>
     >('/posts/statistics', {
+        signal,
+    })
+
+    return unwrapApiResponse(
+        response.data,
+        response.status,
+    )
+}
+
+export async function getPostHighlights(
+    limit = 4,
+    signal?: AbortSignal,
+): Promise<PostHighlights> {
+    const response = await apiClient.get<
+        ApiResponse<PostHighlights>
+    >('/posts/highlights', {
+        params: { limit },
         signal,
     })
 

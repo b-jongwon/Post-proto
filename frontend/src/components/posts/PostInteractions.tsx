@@ -228,6 +228,20 @@ export function PostInteractions({
                         }
                         : previous,
             )
+
+            void queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'highlights',
+                ],
+            })
+
+            void queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'statistics',
+                ],
+            })
         },
     })
 
@@ -241,6 +255,35 @@ export function PostInteractions({
 
             await queryClient.invalidateQueries({
                 queryKey: commentsQueryKey,
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'detail',
+                    postId,
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'home',
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'highlights',
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'statistics',
+                ],
             })
         },
     })
@@ -267,6 +310,35 @@ export function PostInteractions({
             await queryClient.invalidateQueries({
                 queryKey: commentsQueryKey,
             })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'detail',
+                    postId,
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'home',
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'highlights',
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'statistics',
+                ],
+            })
         },
     })
 
@@ -278,6 +350,35 @@ export function PostInteractions({
 
             await queryClient.invalidateQueries({
                 queryKey: commentsQueryKey,
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'detail',
+                    postId,
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'home',
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'highlights',
+                ],
+            })
+
+            await queryClient.invalidateQueries({
+                queryKey: [
+                    'posts',
+                    'statistics',
+                ],
             })
         },
         onError: () => {

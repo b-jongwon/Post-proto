@@ -2,14 +2,23 @@ import { createBrowserRouter } from 'react-router-dom'
 import App from '@/App'
 import { ProtectedRoute } from '@/features/auth/components/ProtectedRoute'
 import { RootLayout } from '@/layouts/RootLayout'
-import { HomePage } from '@/pages/HomePage'
-import { LoginPage } from '@/pages/LoginPage'
-import { MyPage } from '@/pages/MyPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { PostCreatePage } from '@/pages/PostCreatePage'
-import { PostDetailPage } from '@/pages/PostDetailPage'
-import { PostEditPage } from '@/pages/PostEditPage'
-import { SignupPage } from '@/pages/SignupPage'
+import {
+    AdminPage,
+    HomePage,
+    LoginPage,
+    MyPage,
+    NotFoundPage,
+    NotificationsPage,
+    PageSuspense,
+    PostCreatePage,
+    PostDetailPage,
+    PostEditPage,
+    SignupPage,
+} from '@/router/LazyPages'
+
+function page(element: React.ReactNode) {
+    return <PageSuspense>{element}</PageSuspense>
+}
 
 export const router = createBrowserRouter([
     {
@@ -20,40 +29,48 @@ export const router = createBrowserRouter([
                 children: [
                     {
                         path: '/',
-                        element: <HomePage />,
+                        element: page(<HomePage />),
                     },
                     {
                         path: '/posts/:postId',
-                        element: <PostDetailPage />,
+                        element: page(<PostDetailPage />),
                     },
                     {
                         path: '/login',
-                        element: <LoginPage />,
+                        element: page(<LoginPage />),
                     },
                     {
                         path: '/signup',
-                        element: <SignupPage />,
+                        element: page(<SignupPage />),
                     },
                     {
                         element: <ProtectedRoute />,
                         children: [
                             {
                                 path: '/posts/new',
-                                element: <PostCreatePage />,
+                                element: page(<PostCreatePage />),
                             },
                             {
                                 path: '/posts/:postId/edit',
-                                element: <PostEditPage />,
+                                element: page(<PostEditPage />),
                             },
                             {
                                 path: '/me',
-                                element: <MyPage />,
+                                element: page(<MyPage />),
+                            },
+                            {
+                                path: '/notifications',
+                                element: page(<NotificationsPage />),
+                            },
+                            {
+                                path: '/admin',
+                                element: page(<AdminPage />),
                             },
                         ],
                     },
                     {
                         path: '*',
-                        element: <NotFoundPage />,
+                        element: page(<NotFoundPage />),
                     },
                 ],
             },

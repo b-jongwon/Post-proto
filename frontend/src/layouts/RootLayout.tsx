@@ -1,5 +1,4 @@
 import {
-    Bell,
     Home,
     LogIn,
     LogOut,
@@ -19,6 +18,7 @@ import {
     useLogout,
     useSession,
 } from '@/features/auth/hooks/useAuth'
+import {NotificationBell} from '@/components/notifications/NotificationBell'
 
 const desktopNavigation = [
     {
@@ -86,13 +86,9 @@ export function RootLayout() {
                     </nav>
 
                     <div className="site-header__actions">
-                        <button
-                            type="button"
-                            className="icon-button desktop-only"
-                            aria-label="알림"
-                        >
-                            <Bell size={20} />
-                        </button>
+                        <NotificationBell
+                            enabled={Boolean(user)}
+                        />
 
                         {session.isPending ? (
                             <span

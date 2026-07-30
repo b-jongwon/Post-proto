@@ -9,6 +9,8 @@ import type {
   MyInfoResponse,
   SignupRequest,
   SignupResponse,
+  EmailVerificationConfirmResponse,
+  EmailVerificationIssueResponse,
 } from '@/features/auth/types'
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
@@ -19,6 +21,30 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
 
 export async function signup(payload: SignupRequest): Promise<SignupResponse> {
   const response = await apiClient.post<ApiResponse<SignupResponse>>('/auth/signup', payload)
+  return unwrapApiResponse(response.data, response.status)
+}
+
+export async function requestEmailVerification(
+  email: string,
+): Promise<EmailVerificationIssueResponse> {
+  const response = await apiClient.post<
+    ApiResponse<EmailVerificationIssueResponse>
+  >('/auth/email-verifications', { email })
+
+  return unwrapApiResponse(response.data, response.status)
+}
+
+export async function confirmEmailVerification(
+  email: string,
+  code: string,
+): Promise<EmailVerificationConfirmResponse> {
+  const response = await apiClient.post<
+    ApiResponse<EmailVerificationConfirmResponse>
+  >('/auth/email-verifications/confirm', {
+    email,
+    code,
+  })
+
   return unwrapApiResponse(response.data, response.status)
 }
 

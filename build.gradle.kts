@@ -61,6 +61,14 @@ dependencies {
     )
 
     /*
+     * 회원가입 이메일 인증 메일 발송
+     */
+    implementation(
+        "org.springframework.boot:" +
+                "spring-boot-starter-mail"
+    )
+
+    /*
      * /actuator/health 등 운영 상태 확인
      */
     implementation(

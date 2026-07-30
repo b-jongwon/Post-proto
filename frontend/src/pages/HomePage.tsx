@@ -13,6 +13,7 @@ import {
     Clock3,
     Eye,
     Heart,
+    MessageCircle,
     RotateCcw,
     Search,
     ShieldCheck,
@@ -21,6 +22,7 @@ import {
 } from 'lucide-react'
 import {Link} from 'react-router-dom'
 import {Badge} from '@/components/ui/Badge'
+import {HomeHighlights} from '@/components/home/HomeHighlights'
 import {useSession} from '@/features/auth/hooks/useAuth'
 import {
     getPostErrorMessage,
@@ -58,9 +60,9 @@ function getAnalysisPresentation(
         return {
             badgeLabel: '재검증 필요',
             badgeTone: 'warning',
-            score: post.credibilityScore,
+            score: post.confidenceScore,
             statusLabel: '게시글 수정 후 재검증 대기',
-            detailLabel: '이전 분석 결과',
+            detailLabel: '이전 판정 확신도',
         }
     }
 
@@ -79,63 +81,63 @@ function getAnalysisPresentation(
             return {
                 badgeLabel: '사실',
                 badgeTone: 'success',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
 
         case 'MOSTLY_TRUE':
             return {
                 badgeLabel: '대체로 사실',
                 badgeTone: 'success',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
 
         case 'MIXED':
             return {
                 badgeLabel: '혼합',
                 badgeTone: 'warning',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
 
         case 'MOSTLY_FALSE':
             return {
                 badgeLabel: '대체로 거짓',
                 badgeTone: 'danger',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
 
         case 'FALSE':
             return {
                 badgeLabel: '거짓',
                 badgeTone: 'danger',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
 
         case 'UNVERIFIABLE':
             return {
                 badgeLabel: '판단 유보',
                 badgeTone: 'brand',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
 
         default:
             return {
                 badgeLabel: '분석 완료',
                 badgeTone: 'brand',
-                score: post.credibilityScore,
+                score: post.confidenceScore,
                 statusLabel: 'AI 분석 완료',
-                detailLabel: '신뢰도 점수',
+                detailLabel: '판정 확신도',
             }
     }
 }
@@ -156,7 +158,7 @@ function ScoreRing({
         >
             <div className="score-ring__inner">
                 <strong>{score}</strong>
-                <span>신뢰도</span>
+                <span>확신도</span>
             </div>
         </div>
     )
@@ -329,6 +331,15 @@ export function HomePage() {
         statisticsQuery.data
             ?.completedVerificationCount ?? 0
 
+    const totalLikeCount =
+        statisticsQuery.data?.totalLikeCount ?? 0
+
+    const totalCommentCount =
+        statisticsQuery.data?.totalCommentCount ?? 0
+
+    const todayPostCount =
+        statisticsQuery.data?.todayPostCount ?? 0
+
     const pendingVerificationCount =
         statisticsQuery.data
             ?.pendingVerificationCount ?? 0
@@ -495,7 +506,7 @@ export function HomePage() {
                             </p>
 
                             <div className="analysis-card__score">
-                                <ScoreRing score={0}/>
+                                <ScoreRing score={96}/>
 
                                 <div>
                                     <strong>
@@ -553,6 +564,60 @@ export function HomePage() {
                             </div>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <HomeHighlights/>
+
+            <section
+                className="home-stats-strip"
+                aria-label="FactHub 서비스 통계"
+            >
+                <div className="container home-stats-strip__grid">
+                    <article>
+                        <span><ShieldCheck size={19}/></span>
+                        <div>
+                            <small>총 게시글</small>
+                            <strong>
+                                {statisticsQuery.isPending
+                                    ? '—'
+                                    : totalPostCount.toLocaleString('ko-KR')}
+                            </strong>
+                        </div>
+                    </article>
+                    <article>
+                        <span><Heart size={19}/></span>
+                        <div>
+                            <small>총 좋아요</small>
+                            <strong>
+                                {statisticsQuery.isPending
+                                    ? '—'
+                                    : totalLikeCount.toLocaleString('ko-KR')}
+                            </strong>
+                        </div>
+                    </article>
+                    <article>
+                        <span><MessageCircle size={19}/></span>
+                        <div>
+                            <small>총 댓글</small>
+                            <strong>
+                                {statisticsQuery.isPending
+                                    ? '—'
+                                    : totalCommentCount.toLocaleString('ko-KR')}
+                            </strong>
+                        </div>
+                    </article>
+                    <article>
+                        <span><Clock3 size={19}/></span>
+                        <div>
+                            <small>오늘 작성</small>
+                            <strong>
+                                {statisticsQuery.isPending
+                                    ? '—'
+                                    : todayPostCount.toLocaleString('ko-KR')}
+                            </strong>
+                        </div>
+                    </article>
                 </div>
             </section>
 
@@ -742,6 +807,13 @@ export function HomePage() {
                                                            <Heart size={15}/>
                                                            좋아요{' '}
                                                           {(post.likeCount ?? 0).toLocaleString(
+                                                            'ko-KR',
+                                                        )}
+                                                    </span>
+                                                    <span>
+                                                        <MessageCircle size={15}/>
+                                                        댓글{' '}
+                                                        {(post.commentCount ?? 0).toLocaleString(
                                                             'ko-KR',
                                                         )}
                                                     </span>

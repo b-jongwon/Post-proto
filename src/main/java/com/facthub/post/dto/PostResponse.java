@@ -14,24 +14,26 @@ public record PostResponse(
         String status,
         Long viewCount,
         Long likeCount,
+        Long commentCount,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
 
-    /*
-     * 새 게시글처럼 좋아요가 확실히 0개인 경우를 위한 메서드다.
-     */
     public static PostResponse from(Post post) {
-        return from(post, 0L);
+        return from(post, 0L, 0L);
     }
 
-    /*
-     * 게시글 상세 조회, 수정 응답 등에
-     * 실제 좋아요 수를 포함한다.
-     */
     public static PostResponse from(
             Post post,
             long likeCount
+    ) {
+        return from(post, likeCount, 0L);
+    }
+
+    public static PostResponse from(
+            Post post,
+            long likeCount,
+            long commentCount
     ) {
         return new PostResponse(
                 post.getId(),
@@ -43,6 +45,7 @@ public record PostResponse(
                 post.getStatus().name(),
                 post.getViewCount(),
                 likeCount,
+                commentCount,
                 post.getCreatedAt(),
                 post.getUpdatedAt()
         );

@@ -3,6 +3,7 @@ package com.facthub.post.controller;
 import com.facthub.common.response.ApiResponse;
 import com.facthub.common.response.PageResponse;
 import com.facthub.post.dto.PostCreateRequest;
+import com.facthub.post.dto.PostHighlightsResponse;
 import com.facthub.post.dto.PostResponse;
 import com.facthub.post.dto.PostStatisticsResponse;
 import com.facthub.post.dto.PostSummaryResponse;
@@ -74,6 +75,17 @@ public class PostController {
     getStatistics() {
         return ApiResponse.success(
                 postService.getStatistics()
+        );
+    }
+
+    @GetMapping("/highlights")
+    public ApiResponse<PostHighlightsResponse>
+    getHighlights(
+            @RequestParam(defaultValue = "4")
+            int limit
+    ) {
+        return ApiResponse.success(
+                postService.getHighlights(limit)
         );
     }
 

@@ -1,6 +1,8 @@
 package com.facthub.postlike.repository;
 
 import com.facthub.postlike.domain.PostLike;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,6 +25,29 @@ public interface PostLikeRepository
     long deleteByPost_IdAndUser_Id(
             Long postId,
             Long userId
+    );
+
+    long countByUser_Id(Long userId);
+
+    @EntityGraph(
+            attributePaths = {
+                    "post",
+                    "post.author"
+            }
+    )
+    @Query("""
+            SELECT postLike
+            FROM PostLike postLike
+            WHERE postLike.user.id = :userId
+              AND postLike.post.status =
+                  com.facthub.post.domain.PostStatus.PUBLISHED
+            ORDER BY postLike.createdAt DESC,
+                     postLike.id DESC
+            """)
+    List<PostLike> findRecentByUser(
+            @Param("userId")
+            Long userId,
+            Pageable pageable
     );
 
     /*

@@ -138,6 +138,14 @@ public class Post {
         this.status = PostStatus.DELETED;
     }
 
+    public void hide() {
+        this.status = PostStatus.HIDDEN;
+    }
+
+    public void publish() {
+        this.status = PostStatus.PUBLISHED;
+    }
+
     public boolean isWrittenBy(Long userId) {
         return author.getId().equals(userId);
     }

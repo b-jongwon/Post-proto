@@ -8,6 +8,10 @@ public record SignupResponse(
         Long userId,
         String email,
         String nickname,
+        String fullName,
+        Integer birthYear,
+        Integer age,
+        LocalDateTime emailVerifiedAt,
         String role,
         String status,
         LocalDateTime createdAt
@@ -18,6 +22,10 @@ public record SignupResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getNickname(),
+                user.getFullName(),
+                user.getBirthYear(),
+                user.getAge(),
+                user.getEmailVerifiedAt(),
                 user.getRole().name(),
                 user.getStatus().name(),
                 user.getCreatedAt()

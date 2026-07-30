@@ -20,7 +20,10 @@ RUN ./gradlew clean bootJar \
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-RUN useradd --system --create-home --uid 10001 facthub
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home --uid 10001 facthub
 
 COPY --from=builder /app/build/libs/facthub.jar /app/facthub.jar
 

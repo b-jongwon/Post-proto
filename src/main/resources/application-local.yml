@@ -2,34 +2,20 @@ server:
   port: 8080
 
 spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/facthub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: facthub_app
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
   jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
     properties:
       hibernate:
         format_sql: true
         show_sql: true
 
-  flyway:
-    enabled: true
-    baseline-on-migrate: false
-
-  thymeleaf:
-    cache: false
-
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-
+  health:
+    mail:
+      enabled: false
   endpoint:
     health:
       show-details: always
+
+facthub:
+  mail:
+    delivery-mode: ${MAIL_DELIVERY_MODE:log}

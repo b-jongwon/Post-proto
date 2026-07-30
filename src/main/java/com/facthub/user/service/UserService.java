@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Locale;
 
 @Service
@@ -20,13 +21,19 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService
+            emailVerificationService;
 
     public UserService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            EmailVerificationService
+                    emailVerificationService
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailVerificationService =
+                emailVerificationService;
     }
 
     @Transactional
@@ -37,9 +44,18 @@ public class UserService {
                 .toLowerCase(Locale.ROOT);
 
         String nickname = request.nickname().trim();
+        String fullName = request.fullName().trim();
+
+        validateBirthYear(request.birthYear());
 
         validateDuplicateEmail(email);
         validateDuplicateNickname(nickname);
+
+        emailVerificationService
+                .consumeVerifiedEmail(
+                        email,
+                        request.emailVerificationToken()
+                );
 
         String encodedPassword =
                 passwordEncoder.encode(request.password());
@@ -47,7 +63,9 @@ public class UserService {
         User user = User.createUser(
                 email,
                 encodedPassword,
-                nickname
+                nickname,
+                fullName,
+                request.birthYear()
         );
 
         try {
@@ -92,6 +110,19 @@ public class UserService {
             throw new DuplicateUserException(
                     "NICKNAME_ALREADY_EXISTS",
                     "이미 사용 중인 닉네임입니다."
+            );
+        }
+    }
+
+    private void validateBirthYear(Integer birthYear) {
+        int currentYear = LocalDate.now().getYear();
+
+        if (birthYear == null
+                || birthYear < 1900
+                || birthYear > currentYear) {
+
+            throw new IllegalArgumentException(
+                    "출생연도를 확인해주세요."
             );
         }
     }

@@ -6,6 +6,7 @@ import { queryClient } from '@/app/queryClient'
 import { router } from '@/router/router'
 import '@/styles/tokens.css'
 import '@/styles/global.css'
+import '@/styles/enhancements.css'
 
 const rootElement = document.getElementById('root')
 

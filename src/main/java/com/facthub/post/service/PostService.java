@@ -3,6 +3,8 @@ package com.facthub.post.service;
 import com.facthub.common.exception.PostAccessDeniedException;
 import com.facthub.common.exception.PostNotFoundException;
 import com.facthub.common.response.PageResponse;
+import com.facthub.comment.domain.CommentStatus;
+import com.facthub.comment.repository.CommentRepository;
 import com.facthub.factcheck.domain.FactCheckStatus;
 import com.facthub.factcheck.domain.PostAnalysisSelection;
 import com.facthub.factcheck.repository.FactCheckAnalysisRepository;
@@ -10,6 +12,7 @@ import com.facthub.factcheck.repository.PostAnalysisSelectionRepository;
 import com.facthub.post.domain.Post;
 import com.facthub.post.domain.PostStatus;
 import com.facthub.post.dto.PostCreateRequest;
+import com.facthub.post.dto.PostHighlightsResponse;
 import com.facthub.post.dto.PostResponse;
 import com.facthub.post.dto.PostStatisticsResponse;
 import com.facthub.post.dto.PostSummaryResponse;
@@ -19,6 +22,7 @@ import com.facthub.postlike.repository.PostLikeRepository;
 import com.facthub.user.domain.User;
 import com.facthub.user.service.UserService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -27,9 +31,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 @Transactional(readOnly = true)
@@ -41,7 +44,10 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final CommentRepository commentRepository;
     private final UserService userService;
+    private final PostSummaryAssembler
+            postSummaryAssembler;
 
     private final FactCheckAnalysisRepository
             factCheckAnalysisRepository;
@@ -52,7 +58,9 @@ public class PostService {
     public PostService(
             PostRepository postRepository,
             PostLikeRepository postLikeRepository,
+            CommentRepository commentRepository,
             UserService userService,
+            PostSummaryAssembler postSummaryAssembler,
             FactCheckAnalysisRepository
                     factCheckAnalysisRepository,
             PostAnalysisSelectionRepository
@@ -60,7 +68,10 @@ public class PostService {
     ) {
         this.postRepository = postRepository;
         this.postLikeRepository = postLikeRepository;
+        this.commentRepository = commentRepository;
         this.userService = userService;
+        this.postSummaryAssembler =
+                postSummaryAssembler;
 
         this.factCheckAnalysisRepository =
                 factCheckAnalysisRepository;
@@ -91,6 +102,7 @@ public class PostService {
 
         return PostResponse.from(
                 savedPost,
+                0L,
                 0L
         );
     }
@@ -122,82 +134,56 @@ public class PostService {
                 normalizedCategory
         );
 
+        String normalizedSort =
+                normalizeSortValue(sort);
+
         PageRequest pageable = PageRequest.of(
                 page,
                 size,
-                createSort(sort)
+                usesAggregateSort(normalizedSort)
+                        ? Sort.unsorted()
+                        : createSort(normalizedSort)
         );
 
         Page<Post> postPage =
-                postRepository.searchPosts(
-                        PostStatus.PUBLISHED,
-                        normalizedKeyword,
-                        normalizedCategory,
-                        pageable
+                switch (normalizedSort) {
+                    case "likes" ->
+                            postRepository
+                                    .searchPostsByLikes(
+                                            PostStatus.PUBLISHED,
+                                            normalizedKeyword,
+                                            normalizedCategory,
+                                            pageable
+                                    );
+
+                    case "popular" ->
+                            postRepository
+                                    .searchPopularPosts(
+                                            PostStatus.PUBLISHED,
+                                            normalizedKeyword,
+                                            normalizedCategory,
+                                            pageable
+                                    );
+
+                    default ->
+                            postRepository.searchPosts(
+                                    PostStatus.PUBLISHED,
+                                    normalizedKeyword,
+                                    normalizedCategory,
+                                    pageable
+                            );
+                };
+
+        List<PostSummaryResponse> summaries =
+                postSummaryAssembler.assemble(
+                        postPage.getContent()
                 );
 
-        List<Long> postIds =
-                postPage.getContent()
-                        .stream()
-                        .map(Post::getId)
-                        .toList();
-
-        Map<Long, PostAnalysisSelection>
-                selectionByPostId;
-
-        Map<Long, Long>
-                likeCountByPostId;
-
-        if (postIds.isEmpty()) {
-            selectionByPostId = Map.of();
-            likeCountByPostId = Map.of();
-        } else {
-            selectionByPostId =
-                    selectionRepository
-                            .findAllByPost_IdIn(
-                                    postIds
-                            )
-                            .stream()
-                            .collect(
-                                    Collectors.toMap(
-                                            PostAnalysisSelection::getPostId,
-                                            Function.identity()
-                                    )
-                            );
-
-            likeCountByPostId =
-                    postLikeRepository
-                            .countLikesByPostIds(
-                                    postIds
-                            )
-                            .stream()
-                            .collect(
-                                    Collectors.toMap(
-                                            PostLikeRepository
-                                                    .PostLikeCountProjection
-                                                    ::getPostId,
-
-                                            PostLikeRepository
-                                                    .PostLikeCountProjection
-                                                    ::getLikeCount
-                                    )
-                            );
-        }
-
         Page<PostSummaryResponse> responsePage =
-                postPage.map(post ->
-                        PostSummaryResponse.from(
-                                post,
-
-                                selectionByPostId.get(
-                                        post.getId()
-                                ),
-
-                                likeCountByPostId.getOrDefault(
-                                        post.getId(),
-                                        0L
-                                )
-                        )
+                new PageImpl<>(
+                        summaries,
+                        pageable,
+                        postPage.getTotalElements()
                 );
 
         return PageResponse.from(responsePage);
@@ -225,9 +211,97 @@ public class PostService {
                                 FactCheckStatus.COMPLETED
                         );
 
+        long totalLikeCount =
+                postLikeRepository.count();
+
+        long totalCommentCount =
+                commentRepository.countByStatus(
+                        CommentStatus.ACTIVE
+                );
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime todayStart =
+                today.atStartOfDay();
+
+        long todayPostCount =
+                postRepository
+                        .countByStatusAndCreatedAtBetween(
+                                PostStatus.PUBLISHED,
+                                todayStart,
+                                today.plusDays(1)
+                                        .atStartOfDay()
+                        );
+
         return PostStatisticsResponse.of(
                 totalPostCount,
-                completedVerificationCount
+                completedVerificationCount,
+                totalLikeCount,
+                totalCommentCount,
+                todayPostCount
+        );
+    }
+
+    public PostHighlightsResponse getHighlights(
+            int limit
+    ) {
+        if (limit < 1 || limit > 10) {
+            throw new IllegalArgumentException(
+                    "하이라이트 개수는 1 이상 10 이하여야 합니다."
+            );
+        }
+
+        PageRequest aggregatePage =
+                PageRequest.of(
+                        0,
+                        limit,
+                        Sort.unsorted()
+                );
+
+        List<Post> popular =
+                postRepository.searchPopularPosts(
+                        PostStatus.PUBLISHED,
+                        null,
+                        null,
+                        aggregatePage
+                ).getContent();
+
+        List<Post> mostLiked =
+                postRepository.searchPostsByLikes(
+                        PostStatus.PUBLISHED,
+                        null,
+                        null,
+                        aggregatePage
+                ).getContent();
+
+        List<Post> mostViewed =
+                postRepository.searchPosts(
+                        PostStatus.PUBLISHED,
+                        null,
+                        null,
+                        PageRequest.of(
+                                0,
+                                limit,
+                                createSort("views")
+                        )
+                ).getContent();
+
+        List<Post> latest =
+                postRepository.searchPosts(
+                        PostStatus.PUBLISHED,
+                        null,
+                        null,
+                        PageRequest.of(
+                                0,
+                                limit,
+                                createSort("latest")
+                        )
+                ).getContent();
+
+        return new PostHighlightsResponse(
+                postSummaryAssembler.assemble(popular),
+                postSummaryAssembler.assemble(mostLiked),
+                postSummaryAssembler.assemble(mostViewed),
+                postSummaryAssembler.assemble(latest)
         );
     }
 
@@ -249,9 +323,17 @@ public class PostService {
                         postId
                 );
 
+        long commentCount =
+                commentRepository
+                        .countByPost_IdAndStatus(
+                                postId,
+                                CommentStatus.ACTIVE
+                        );
+
         return PostResponse.from(
                 post,
-                likeCount
+                likeCount,
+                commentCount
         );
     }
 
@@ -304,9 +386,17 @@ public class PostService {
                         postId
                 );
 
+        long commentCount =
+                commentRepository
+                        .countByPost_IdAndStatus(
+                                postId,
+                                CommentStatus.ACTIVE
+                        );
+
         return PostResponse.from(
                 post,
-                likeCount
+                likeCount,
+                commentCount
         );
     }
 
@@ -394,9 +484,16 @@ public class PostService {
 
             default ->
                     throw new IllegalArgumentException(
-                            "정렬 방식은 latest 또는 views만 가능합니다."
+                            "정렬 방식은 latest, views, likes 또는 popular만 가능합니다."
                     );
         };
+    }
+
+    private boolean usesAggregateSort(
+            String normalizedSort
+    ) {
+        return "likes".equals(normalizedSort)
+                || "popular".equals(normalizedSort);
     }
 
     private String normalizeSortValue(

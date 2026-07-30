@@ -13,6 +13,7 @@ import com.facthub.common.response.PageResponse;
 import com.facthub.post.domain.Post;
 import com.facthub.post.domain.PostStatus;
 import com.facthub.post.repository.PostRepository;
+import com.facthub.notification.service.NotificationService;
 import com.facthub.user.domain.User;
 import com.facthub.user.service.UserService;
 import org.springframework.data.domain.Page;
@@ -30,15 +31,20 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserService userService;
+    private final NotificationService
+            notificationService;
 
     public CommentService(
             CommentRepository commentRepository,
             PostRepository postRepository,
-            UserService userService
+            UserService userService,
+            NotificationService notificationService
     ) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userService = userService;
+        this.notificationService =
+                notificationService;
     }
 
     public PageResponse<CommentResponse> getComments(
@@ -98,6 +104,11 @@ public class CommentService {
 
         Comment savedComment =
                 commentRepository.save(comment);
+
+        notificationService.notifyComment(
+                post,
+                user
+        );
 
         return CommentResponse.from(savedComment);
     }

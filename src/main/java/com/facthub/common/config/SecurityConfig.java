@@ -152,6 +152,8 @@ public class SecurityConfig {
                                 "/api/csrf",
                                 "/api/auth/signup",
                                 "/api/auth/login",
+                                "/api/auth/email-verifications",
+                                "/api/auth/email-verifications/confirm",
                                 "/actuator/health",
                                 "/actuator/info",
                                 "/error"
@@ -163,6 +165,10 @@ public class SecurityConfig {
                                 "/api/posts",
                                 "/api/posts/**"
                         ).permitAll()
+
+                        .requestMatchers(
+                                "/api/admin/**"
+                        ).hasRole("ADMIN")
 
                         // 나머지 요청은 로그인 필요
                         .anyRequest().authenticated()
@@ -194,7 +200,9 @@ public class SecurityConfig {
                         )
                         .ignoringRequestMatchers(
                                 "/api/auth/signup",
-                                "/api/auth/login"
+                                "/api/auth/login",
+                                "/api/auth/email-verifications",
+                                "/api/auth/email-verifications/confirm"
                         )
                 )
 

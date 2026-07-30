@@ -17,6 +17,7 @@ import {
     Eye,
     Gauge,
     Heart,
+    MessageCircle,
     History,
     Info,
     LoaderCircle,
@@ -39,6 +40,7 @@ import {Badge} from '@/components/ui/Badge'
 import {Button} from '@/components/ui/Button'
 import {Skeleton} from '@/components/ui/Skeleton'
 import {PostInteractions} from '@/components/posts/PostInteractions'
+import {PostSharePanel} from '@/components/posts/PostSharePanel'
 import {useSession} from '@/features/auth/hooks/useAuth'
 import {
     changeRepresentativeAnalysis,
@@ -314,7 +316,9 @@ function FactCheckResultSection({
     return (
         <section
             id="fact-check-result"
-            className="fact-check-result"
+            className={`fact-check-result fact-check-result--${
+                analysis.verdict?.toLowerCase() ?? 'pending'
+            }`}
         >
             <header className="fact-check-result__header">
                 <div className="fact-check-result__heading">
@@ -343,7 +347,9 @@ function FactCheckResultSection({
                 </div>
             </header>
 
-            <div className="fact-check-verdict-panel">
+            <div className={`fact-check-verdict-panel fact-check-verdict-panel--${
+                analysis.verdict?.toLowerCase() ?? 'pending'
+            }`}>
                 <div>
                     <span>종합 판정</span>
                     <strong>{verdict.label}</strong>
@@ -1247,6 +1253,13 @@ export function PostDetailPage() {
                                             'ko-KR',
                                         )}
 </span>
+                                    <span>
+                    <MessageCircle size={15}/>
+                    댓글{' '}
+                                        {(post.commentCount ?? 0).toLocaleString(
+                                            'ko-KR',
+                                        )}
+                  </span>
 
                                     {wasUpdated && (
                                         <span>
@@ -1290,6 +1303,8 @@ export function PostDetailPage() {
                                 </button>
                             </footer>
                         </article>
+
+                        <PostSharePanel title={post.title}/>
 
                         {viewedAnalysisId !== null
                             && analysisDetailQuery.isPending && (
@@ -1715,4 +1730,3 @@ export function PostDetailPage() {
             )}
         </section>
     )}
-

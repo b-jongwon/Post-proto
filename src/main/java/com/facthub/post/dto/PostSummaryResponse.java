@@ -16,20 +16,20 @@ public record PostSummaryResponse(
         String authorNickname,
         Long viewCount,
         Long likeCount,
+        Long commentCount,
+        String contentPreview,
         LocalDateTime createdAt,
 
         Long analysisId,
         FactCheckStatus analysisStatus,
         FactCheckVerdict analysisVerdict,
         Integer credibilityScore,
+        Integer confidenceScore,
         String analysisSummary,
         LocalDateTime analysisCompletedAt,
         boolean analysisStale
 ) {
 
-    /*
-     * 기존 호출 코드와의 호환을 위한 기본 메서드다.
-     */
     public static PostSummaryResponse from(
             Post post,
             PostAnalysisSelection selection
@@ -37,22 +37,47 @@ public record PostSummaryResponse(
         return from(
                 post,
                 selection,
+                0L,
                 0L
         );
     }
 
-    /*
-     * 홈 게시글 카드에 실제 좋아요 수를 포함한다.
-     */
     public static PostSummaryResponse from(
             Post post,
             PostAnalysisSelection selection,
             long likeCount
     ) {
+        return from(
+                post,
+                selection,
+                likeCount,
+                0L
+        );
+    }
+
+    public static PostSummaryResponse from(
+            Post post,
+            PostAnalysisSelection selection,
+            long likeCount,
+            long commentCount
+    ) {
         FactCheckAnalysis analysis =
                 selection == null
                         ? null
                         : selection.getAnalysis();
+
+        String normalizedContent =
+                post.getContent()
+                        .replaceAll("\\s+", " ")
+                        .trim();
+
+        String contentPreview =
+                normalizedContent.length() <= 180
+                        ? normalizedContent
+                        : normalizedContent.substring(
+                                0,
+                                180
+                        ) + "...";
 
         return new PostSummaryResponse(
                 post.getId(),
@@ -62,6 +87,8 @@ public record PostSummaryResponse(
                 post.getAuthor().getNickname(),
                 post.getViewCount(),
                 likeCount,
+                commentCount,
+                contentPreview,
                 post.getCreatedAt(),
 
                 analysis == null
@@ -79,6 +106,10 @@ public record PostSummaryResponse(
                 analysis == null
                         ? null
                         : analysis.getCredibilityScore(),
+
+                analysis == null
+                        ? null
+                        : analysis.getConfidenceScore(),
 
                 analysis == null
                         ? null

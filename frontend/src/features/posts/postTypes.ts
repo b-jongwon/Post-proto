@@ -33,24 +33,36 @@ export interface PostSummary {
     authorNickname: string
     viewCount: number
     likeCount: number
+    commentCount: number
+    contentPreview: string
     createdAt: string
 
     analysisId: number | null
     analysisStatus: FactCheckStatus | null
     analysisVerdict: FactCheckVerdict | null
     credibilityScore: number | null
+    confidenceScore: number | null
     analysisSummary: string | null
     analysisCompletedAt: string | null
     analysisStale: boolean
 
     content?: string
-    contentPreview?: string
 }
 
 export interface PostStatistics {
     totalPostCount: number
+    totalLikeCount: number
+    totalCommentCount: number
+    todayPostCount: number
     completedVerificationCount: number
     pendingVerificationCount: number
+}
+
+export interface PostHighlights {
+    popular: PostSummary[]
+    mostLiked: PostSummary[]
+    mostViewed: PostSummary[]
+    latest: PostSummary[]
 }
 
 export interface PostDetail {
@@ -63,6 +75,7 @@ export interface PostDetail {
     status: string
     viewCount: number
     likeCount: number
+    commentCount: number
     createdAt: string
     updatedAt: string
 }
@@ -83,7 +96,11 @@ export interface PostDeleteResponse {
     message: string
 }
 
-export type PostSort = 'latest' | 'views'
+export type PostSort =
+    | 'latest'
+    | 'views'
+    | 'likes'
+    | 'popular'
 
 export interface GetPostsParams {
     page: number

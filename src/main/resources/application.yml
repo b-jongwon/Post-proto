@@ -1,8 +1,50 @@
 spring:
+  application:
+    name: facthub
+
   datasource:
-    url: jdbc:mysql://localhost:3306/facthub
-    username: facthub_app
-    password: ${DB_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/facthub?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${SPRING_DATASOURCE_USERNAME:facthub_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
 
   profiles:
-    active: local
+    default: local
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_STARTTLS_ENABLE:true}
+
+facthub:
+  admin:
+    bootstrap-email: ${ADMIN_BOOTSTRAP_EMAIL:}
+  mail:
+    delivery-mode: ${MAIL_DELIVERY_MODE:log}
+    from: ${MAIL_FROM:no-reply@facthub.local}
+  email-verification:
+    code-ttl-minutes: 10
+    token-ttl-minutes: 30
+    resend-cooldown-seconds: 60
+    max-attempts: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

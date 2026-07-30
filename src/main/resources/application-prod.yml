@@ -1,0 +1,25 @@
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:false}
+        same-site: lax
+
+spring:
+  jpa:
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+facthub:
+  mail:
+    delivery-mode: ${MAIL_DELIVERY_MODE:smtp}
+

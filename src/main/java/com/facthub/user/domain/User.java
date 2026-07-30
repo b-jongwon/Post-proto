@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,6 +44,21 @@ public class User {
             length = 50
     )
     private String nickname;
+
+    @Column(
+            name = "full_name",
+            length = 50
+    )
+    private String fullName;
+
+    @Column(name = "birth_year")
+    private Integer birthYear;
+
+    @Column(
+            name = "email_verified_at",
+            nullable = false
+    )
+    private LocalDateTime emailVerifiedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -82,12 +98,18 @@ public class User {
             String email,
             String passwordHash,
             String nickname,
+            String fullName,
+            Integer birthYear,
+            LocalDateTime emailVerifiedAt,
             UserRole role,
             UserStatus status
     ) {
         this.email = email;
         this.passwordHash = passwordHash;
         this.nickname = nickname;
+        this.fullName = fullName;
+        this.birthYear = birthYear;
+        this.emailVerifiedAt = emailVerifiedAt;
         this.role = role;
         this.status = status;
     }
@@ -95,15 +117,36 @@ public class User {
     public static User createUser(
             String email,
             String passwordHash,
-            String nickname
+            String nickname,
+            String fullName,
+            Integer birthYear
     ) {
         return new User(
                 email,
                 passwordHash,
                 nickname,
+                fullName,
+                birthYear,
+                LocalDateTime.now(),
                 UserRole.USER,
                 UserStatus.ACTIVE
         );
+    }
+
+    public void suspend() {
+        this.status = UserStatus.SUSPENDED;
+    }
+
+    public void activate() {
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public boolean isAdmin() {
+        return role == UserRole.ADMIN;
+    }
+
+    public void promoteToAdmin() {
+        this.role = UserRole.ADMIN;
     }
 
     public Long getId() {
@@ -120,6 +163,33 @@ public class User {
 
     public String getNickname() {
         return nickname;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public Integer getBirthYear() {
+        return birthYear;
+    }
+
+    public Integer getAge() {
+        if (birthYear == null) {
+            return null;
+        }
+
+        return Math.max(
+                0,
+                LocalDate.now().getYear() - birthYear
+        );
+    }
+
+    public LocalDateTime getEmailVerifiedAt() {
+        return emailVerifiedAt;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
     }
 
     public UserRole getRole() {

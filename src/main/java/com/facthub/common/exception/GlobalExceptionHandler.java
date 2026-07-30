@@ -23,6 +23,21 @@ public class GlobalExceptionHandler {
                     GlobalExceptionHandler.class
             );
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>>
+    handleBusinessException(
+            BusinessException exception
+    ) {
+        return ResponseEntity
+                .status(exception.getStatus())
+                .body(
+                        ApiResponse.failure(
+                                exception.getErrorCode(),
+                                exception.getMessage()
+                        )
+                );
+    }
+
     @ExceptionHandler(DuplicateUserException.class)
     public ResponseEntity<ApiResponse<Void>>
     handleDuplicateUser(

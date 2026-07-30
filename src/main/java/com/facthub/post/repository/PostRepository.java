@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository
@@ -101,6 +103,171 @@ public interface PostRepository
      */
     long countByStatus(
             PostStatus status
+    );
+
+    long countByAuthor_IdAndStatusNot(
+            Long authorId,
+            PostStatus excludedStatus
+    );
+
+    long countByStatusAndCreatedAtBetween(
+            PostStatus status,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+    @EntityGraph(attributePaths = "author")
+    @Query("""
+            SELECT post
+            FROM Post post
+            WHERE post.author.id = :authorId
+              AND post.status <> :excludedStatus
+            ORDER BY post.createdAt DESC,
+                     post.id DESC
+            """)
+    List<Post> findRecentByAuthor(
+            @Param("authorId")
+            Long authorId,
+            @Param("excludedStatus")
+            PostStatus excludedStatus,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = "author")
+    @Query("""
+            SELECT post
+            FROM Post post
+            WHERE post.status <> :excludedStatus
+            ORDER BY post.createdAt DESC,
+                     post.id DESC
+            """)
+    Page<Post> findAdminPosts(
+            @Param("excludedStatus")
+            PostStatus excludedStatus,
+            Pageable pageable
+    );
+
+
+    @EntityGraph(attributePaths = "author")
+    @Query(
+            value = """
+                    SELECT post
+                    FROM Post post
+                    LEFT JOIN PostLike postLike
+                      ON postLike.post = post
+                    WHERE post.status = :status
+                      AND (
+                            :keyword IS NULL
+                            OR LOWER(post.title)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.content)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.author.nickname)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                      )
+                      AND (
+                            :category IS NULL
+                            OR LOWER(post.category)
+                                = LOWER(:category)
+                      )
+                    GROUP BY post
+                    ORDER BY COUNT(postLike.id) DESC,
+                             post.createdAt DESC,
+                             post.id DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(post)
+                    FROM Post post
+                    WHERE post.status = :status
+                      AND (
+                            :keyword IS NULL
+                            OR LOWER(post.title)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.content)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.author.nickname)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                      )
+                      AND (
+                            :category IS NULL
+                            OR LOWER(post.category)
+                                = LOWER(:category)
+                      )
+                    """
+    )
+    Page<Post> searchPostsByLikes(
+            @Param("status")
+            PostStatus status,
+            @Param("keyword")
+            String keyword,
+            @Param("category")
+            String category,
+            Pageable pageable
+    );
+
+    @EntityGraph(attributePaths = "author")
+    @Query(
+            value = """
+                    SELECT post
+                    FROM Post post
+                    LEFT JOIN PostLike postLike
+                      ON postLike.post = post
+                    LEFT JOIN Comment comment
+                      ON comment.post = post
+                     AND comment.status =
+                         com.facthub.comment.domain.CommentStatus.ACTIVE
+                    WHERE post.status = :status
+                      AND (
+                            :keyword IS NULL
+                            OR LOWER(post.title)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.content)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.author.nickname)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                      )
+                      AND (
+                            :category IS NULL
+                            OR LOWER(post.category)
+                                = LOWER(:category)
+                      )
+                    GROUP BY post
+                    ORDER BY (
+                        post.viewCount
+                        + COUNT(DISTINCT postLike.id) * 3
+                        + COUNT(DISTINCT comment.id) * 2
+                    ) DESC,
+                    post.createdAt DESC,
+                    post.id DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(post)
+                    FROM Post post
+                    WHERE post.status = :status
+                      AND (
+                            :keyword IS NULL
+                            OR LOWER(post.title)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.content)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                            OR LOWER(post.author.nickname)
+                                LIKE LOWER(CONCAT('%', :keyword, '%'))
+                      )
+                      AND (
+                            :category IS NULL
+                            OR LOWER(post.category)
+                                = LOWER(:category)
+                      )
+                    """
+    )
+    Page<Post> searchPopularPosts(
+            @Param("status")
+            PostStatus status,
+            @Param("keyword")
+            String keyword,
+            @Param("category")
+            String category,
+            Pageable pageable
     );
 
     /*

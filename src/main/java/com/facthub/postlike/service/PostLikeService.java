@@ -9,6 +9,7 @@ import com.facthub.postlike.dto.PostLikeResponse;
 import com.facthub.postlike.repository.PostLikeRepository;
 import com.facthub.user.domain.User;
 import com.facthub.user.service.UserService;
+import com.facthub.notification.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,15 +20,20 @@ public class PostLikeService {
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final UserService userService;
+    private final NotificationService
+            notificationService;
 
     public PostLikeService(
             PostLikeRepository postLikeRepository,
             PostRepository postRepository,
-            UserService userService
+            UserService userService,
+            NotificationService notificationService
     ) {
         this.postLikeRepository = postLikeRepository;
         this.postRepository = postRepository;
         this.userService = userService;
+        this.notificationService =
+                notificationService;
     }
 
     /*
@@ -102,6 +108,11 @@ public class PostLikeService {
                     );
 
             postLikeRepository.save(postLike);
+
+            notificationService.notifyLike(
+                    post,
+                    user
+            );
         }
 
         long likeCount =

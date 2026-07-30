@@ -11,8 +11,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify:
+    name: Verify application
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Verify backend
+        run: ./gradlew test --no-daemon
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
   deploy:
     name: Deploy
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -46,8 +85,24 @@ jobs:
 
               cd /home/ubuntu/Post-proto
 
+              previous_commit="$(git rev-parse HEAD)"
+
+              rollback() {
+                exit_code=$?
+
+                if [ "$exit_code" -ne 0 ]; then
+                  echo "배포 실패: 이전 커밋으로 롤백합니다."
+                  git reset --hard "$previous_commit"
+                  docker compose up -d --build --remove-orphans
+                fi
+
+                exit "$exit_code"
+              }
+
+              trap rollback EXIT
+
               echo "현재 배포 커밋:"
-              git rev-parse --short HEAD
+              git rev-parse --short "$previous_commit"
 
               echo "최신 코드 가져오기"
               git fetch origin main
@@ -55,6 +110,34 @@ jobs:
 
               echo "Docker 재빌드 및 실행"
               docker compose up -d --build --remove-orphans
+
+              echo "서비스 헬스 체크 대기"
+              for attempt in $(seq 1 24); do
+                backend_health="$(
+                  docker inspect \
+                    --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+                    facthub-backend
+                )"
+
+                frontend_health="$(
+                  docker inspect \
+                    --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+                    facthub-frontend
+                )"
+
+                if [ "$backend_health" = "healthy" ] \
+                  && [ "$frontend_health" = "healthy" ]; then
+                  break
+                fi
+
+                if [ "$attempt" -eq 24 ]; then
+                  echo "서비스가 제한 시간 안에 healthy 상태가 되지 않았습니다."
+                  docker compose logs --tail 200
+                  exit 1
+                fi
+
+                sleep 5
+              done
 
               echo "컨테이너 상태"
               docker compose ps
@@ -64,4 +147,6 @@ jobs:
 
               echo "배포 완료 커밋:"
               git rev-parse --short HEAD
+
+              trap - EXIT
           EOF

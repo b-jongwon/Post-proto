@@ -8,6 +8,11 @@ public record MyInfoResponse(
         Long userId,
         String email,
         String nickname,
+        String fullName,
+        Integer birthYear,
+        Integer age,
+        boolean emailVerified,
+        LocalDateTime emailVerifiedAt,
         String role,
         String status,
         LocalDateTime createdAt
@@ -18,6 +23,11 @@ public record MyInfoResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getNickname(),
+                user.getFullName(),
+                user.getBirthYear(),
+                user.getAge(),
+                user.isEmailVerified(),
+                user.getEmailVerifiedAt(),
                 user.getRole().name(),
                 user.getStatus().name(),
                 user.getCreatedAt()
