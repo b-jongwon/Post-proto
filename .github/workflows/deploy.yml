@@ -27,6 +27,9 @@ jobs:
           java-version: "21"
           cache: gradle
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
       - name: Verify backend
         run: ./gradlew test --no-daemon
 
@@ -68,7 +71,15 @@ jobs:
           printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/facthub_deploy_key
           chmod 600 ~/.ssh/facthub_deploy_key
 
-          ssh-keyscan -p "$EC2_PORT" -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          if ! ssh-keyscan \
+            -T 10 \
+            -p "$EC2_PORT" \
+            -H "$EC2_HOST" \
+            >> ~/.ssh/known_hosts; then
+            echo "::error::EC2 SSH 호스트에 연결하지 못했습니다. 호스트, 포트, 보안 그룹을 확인하세요."
+            exit 1
+          fi
+
           chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy to EC2
@@ -93,7 +104,15 @@ jobs:
                 if [ "$exit_code" -ne 0 ]; then
                   echo "배포 실패: 이전 커밋으로 롤백합니다."
                   git reset --hard "$previous_commit"
-                  docker compose up -d --build --remove-orphans
+                  COMPOSE_BAKE=false \
+                    BUILDKIT_PROGRESS=plain \
+                    docker compose build backend
+
+                  COMPOSE_BAKE=false \
+                    BUILDKIT_PROGRESS=plain \
+                    docker compose build frontend
+
+                  docker compose up -d --remove-orphans
                 fi
 
                 exit "$exit_code"
@@ -108,8 +127,18 @@ jobs:
               git fetch origin main
               git reset --hard origin/main
 
-              echo "Docker 재빌드 및 실행"
-              docker compose up -d --build --remove-orphans
+              echo "백엔드 Docker 이미지 빌드"
+              COMPOSE_BAKE=false \
+                BUILDKIT_PROGRESS=plain \
+                docker compose build backend
+
+              echo "프론트엔드 Docker 이미지 빌드"
+              COMPOSE_BAKE=false \
+                BUILDKIT_PROGRESS=plain \
+                docker compose build frontend
+
+              echo "컨테이너 실행"
+              docker compose up -d --remove-orphans
 
               echo "서비스 헬스 체크 대기"
               for attempt in $(seq 1 24); do

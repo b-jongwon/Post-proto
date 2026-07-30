@@ -111,12 +111,10 @@ public class GeminiFactCheckClient
 
             ObjectMapper objectMapper,
 
-            @Value("${GEMINI_API_KEY:}")
+            @Value("${facthub.gemini.api-key}")
             String apiKey,
 
-            @Value(
-                    "${GEMINI_MODEL:gemini-3.5-flash}"
-            )
+            @Value("${facthub.gemini.model}")
             String model
     ) {
         this.restClient = restClient;
