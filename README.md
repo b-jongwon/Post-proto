@@ -53,7 +53,7 @@ docker compose ps
 - `MAIL_PASSWORD`
 - `MAIL_FROM`
 
-HTTPS를 적용한 운영 환경에서는 `SESSION_COOKIE_SECURE=true`를 사용합니다.
+HTTPS를 적용한 운영 환경에서는 `SESSION_COOKIE_SECURE=true`를 사용합니다-테스트.
 
 ## 최초 관리자 지정
 
